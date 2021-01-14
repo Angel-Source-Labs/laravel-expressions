@@ -1,7 +1,7 @@
 <?php
 
 
-namespace AngelSourceLabs\LaravelExpressions;
+namespace AngelSourceLabs\LaravelExpressions\Query\Expression;
 
 
 use Illuminate\Database\Query\Expression;

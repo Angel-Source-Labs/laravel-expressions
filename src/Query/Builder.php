@@ -2,8 +2,8 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Query;
 
-use AngelSourceLabs\LaravelExpressions\Expression\HasBindings;
-use AngelSourceLabs\LaravelExpressions\HasExpression;
+use AngelSourceLabs\LaravelExpressions\Query\Expression\HasBindings;
+use AngelSourceLabs\LaravelExpressions\Query\Expression\HasExpression;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 class Builder extends QueryBuilder

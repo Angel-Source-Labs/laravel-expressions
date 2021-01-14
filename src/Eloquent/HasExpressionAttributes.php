@@ -3,7 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Eloquent;
 
-use AngelSourceLabs\LaravelExpressions\HasExpression;
+use AngelSourceLabs\LaravelExpressions\Query\Expression\HasExpression;
 use AngelSourceLabs\LaravelExpressions\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 

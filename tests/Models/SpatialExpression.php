@@ -4,7 +4,7 @@
 namespace Tests\Models;
 
 
-use AngelSourceLabs\LaravelExpressions\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Query\Expression\ExpressionWithBindings;
 
 class SpatialExpression extends ExpressionWithBindings
 {

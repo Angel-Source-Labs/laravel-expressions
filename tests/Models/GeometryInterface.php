@@ -4,7 +4,7 @@
 namespace Tests\Models;
 
 
-use AngelSourceLabs\LaravelExpressions\HasExpression;
+use AngelSourceLabs\LaravelExpressions\Query\Expression\HasExpression;
 
 interface GeometryInterface extends HasExpression
 {
