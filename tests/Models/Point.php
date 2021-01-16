@@ -11,19 +11,26 @@ class Point implements GeometryInterface
     private $lng = 2;
     private $srid = 4236;
 
+    private $expression;
+
     public function __construct($lat, $lng) {
         $this->lat = $lat;
         $this->lng = $lng;
+        $this->expression = new SpatialExpression($this);
     }
 
-    public function getExpression(): Expression
+    public function getValue()
     {
-        return new SpatialExpression($this);
+        return $this->expression->getValue();
+    }
+
+    public function getBindings(): array
+    {
+        return $this->expression->getBindings();
     }
 
     public function toWkt()
     {
-//        return new ExpressionWithBindings("POINT(? ?)", [$this->lng, $this->lat]);
         return "POINT({$this->lng} {$this->lat})";
 
     }

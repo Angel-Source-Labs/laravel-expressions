@@ -17,9 +17,6 @@ class Builder extends QueryBuilder
             if ($binding instanceof HasBindings) {
                 $unpackedBindings = array_merge($unpackedBindings, $binding->getBindings());
             }
-            else if ($binding instanceof HasExpression and $binding->getExpression() instanceof HasBindings) {
-                $unpackedBindings = array_merge($unpackedBindings, $binding->getExpression()->getBindings());
-            }
             else {
                 $unpackedBindings[] = $binding;
             }
