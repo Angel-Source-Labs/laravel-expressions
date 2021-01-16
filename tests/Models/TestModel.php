@@ -4,6 +4,7 @@
 namespace Tests\Models;
 
 
+use AngelSourceLabs\LaravelExpressions\Eloquent\HasExpressionAttributes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\MySqlConnection;
 use Mockery as m;
@@ -11,7 +12,7 @@ use Tests\Unit\Mocks\TestPDO;
 
 class TestModel extends Model
 {
-    use \AngelSourceLabs\LaravelExpressions\Eloquent\HasExpressionAttributes;
+    use HasExpressionAttributes;
 
 //    protected $spatialFields = ['point'];   // TODO: only required when fetching, not saving
 

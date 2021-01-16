@@ -3,7 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Eloquent;
 
-use AngelSourceLabs\LaravelExpressions\MySqlGrammar;
+use AngelSourceLabs\LaravelExpressions\Query\Grammars\MySqlGrammar;
 use AngelSourceLabs\LaravelExpressions\Query\Builder as QueryBuilder;
 
 trait HasExpressionAttributes
