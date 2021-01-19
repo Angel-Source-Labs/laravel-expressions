@@ -1,7 +1,7 @@
 <?php
 
 
-namespace AngelSourceLabs\LaravelExpressions\Query\Grammars;
+namespace AngelSourceLabs\LaravelExpressions\Database\Query\Grammars;
 
 class SqlServerGrammar extends \Illuminate\Database\Query\Grammars\SqlServerGrammar
 {

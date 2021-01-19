@@ -29,6 +29,7 @@ class TestPDO extends PDO
             return true;
         });
         $stmt->shouldReceive('execute');
+        $stmt->shouldReceive('setFetchMode')->andReturnTrue();
         $stmt->shouldReceive('fetchAll')->andReturn([['id' => 1, 'point' => 'POINT(1 2)']]);
         $stmt->shouldReceive('rowCount')->andReturn(1);
 

@@ -4,8 +4,8 @@
 namespace Tests\Models;
 
 
-use AngelSourceLabs\LaravelExpressions\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 
 class SpatialExpression extends ExpressionWithBindings
 {

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace AngelSourceLabs\LaravelExpressions\Query\Expression;
+namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
 use AngelSourceLabs\LaravelExpressions\Exceptions\GrammarNotDefinedForDatabaseException;
@@ -51,7 +51,6 @@ class Grammar
         return $this->resolve($driver);
     }
 
-    // TODO - might name this resolveAsExpression so that I also have resolve that resolves as string
     public function resolve($driver)
     {
         if (! isset($this->value[$driver])) throw new GrammarNotDefinedForDatabaseException("Grammar not defined for database driver {$driver}\n" . print_r($this->value, true) );

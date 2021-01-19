@@ -3,8 +3,6 @@
 
 namespace Tests\Models;
 
-use Illuminate\Database\Query\Expression;
-
 class Point implements GeometryInterface
 {
     private $lat = 1;

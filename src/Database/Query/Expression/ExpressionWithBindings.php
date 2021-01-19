@@ -1,11 +1,11 @@
 <?php
 
-namespace AngelSourceLabs\LaravelExpressions\Query\Expression;
+namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 
-class ExpressionWithBindings extends Expression implements isExpression, HasBindings
+class ExpressionWithBindings extends Expression implements IsExpression, HasBindings
 {
     private $bindings;
 

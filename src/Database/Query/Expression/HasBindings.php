@@ -1,7 +1,7 @@
 <?php
 
 
-namespace AngelSourceLabs\LaravelExpressions\Query\Expression;
+namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
 interface HasBindings

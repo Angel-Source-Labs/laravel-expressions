@@ -1,10 +1,10 @@
 <?php
 
 
-namespace AngelSourceLabs\LaravelExpressions\Query\Expression;
+namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
-interface isExpression
+interface IsExpression
 {
     /**
      * Get the value of the expression.
