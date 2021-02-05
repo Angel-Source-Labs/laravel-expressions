@@ -105,9 +105,9 @@ class Builder extends \Illuminate\Database\Query\Builder
 
     public function select($columns = ['*'])
     {
-        parent::select($columns);
-
         $columns = is_array($columns) ? $columns : func_get_args();
+
+        parent::select($columns);
 
         foreach ($columns as $as => $column) {
             if ($column instanceof HasBindings) {

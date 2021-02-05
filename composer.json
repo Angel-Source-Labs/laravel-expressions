@@ -7,7 +7,7 @@
         "test:integration": "phpunit -c phpunit.xml.dist --testsuite integration"
     },
     "type": "library",
-    "license": "MIT",
+    "license": "private",
     "authors": [
         {
             "name": "Brion Finlay"
@@ -29,7 +29,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "LaravelTests\\": "vendor/laravel/framework"
         }
     }
 }

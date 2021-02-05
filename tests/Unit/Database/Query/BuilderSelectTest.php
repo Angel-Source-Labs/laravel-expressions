@@ -13,7 +13,7 @@ use Orchestra\Testbench\TestCase;
 use Tests\Unit\Mocks\TestPDO;
 
 
-class BuilderSelectRawTest extends TestCase
+class BuilderSelectTest extends TestCase
 {
     /**
      * @var m\Mock | TestPDO
