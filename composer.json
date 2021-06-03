@@ -30,7 +30,14 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "LaravelTests\\": "vendor/laravel/framework"
+            "Illuminate\\Tests\\": "tests-laravel-framework"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "AngelSourceLabs\\LaravelExpressions\\ExpressionsServiceProvider"
+            ]
         }
     }
 }
