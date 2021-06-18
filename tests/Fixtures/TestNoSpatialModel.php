@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Tests\Models;
+namespace Tests\Fixtures;
 
 
 use Illuminate\Database\Eloquent\Model;

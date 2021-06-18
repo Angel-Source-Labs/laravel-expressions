@@ -10,11 +10,14 @@ use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 use Mockery as m;
 use Orchestra\Testbench\TestCase;
+use Tests\Unit\MakesExpressions;
 use Tests\Unit\Mocks\TestPDO;
 
 
 class BuilderGroupByRawTest extends TestCase
 {
+    use MakesExpressions;
+
     /**
      * @var m\Mock | TestPDO
      */
@@ -33,48 +36,42 @@ class BuilderGroupByRawTest extends TestCase
         $connection->setPdo($this->pdo);
     }
 
-    public function testGroupByRawUsingExpression()
+    public function test_GroupByRaw_using_Expression()
     {
-        $expression = new Expression('price > 100');
-        $sql = DB::table('orders')
-            ->select('department', 'price')
-            ->groupByRaw($expression)
-            ->toSql();
-        $this->assertEquals('select `department`, `price` from `orders` group by price > 100', $sql);
+        foreach ($this->makeExpressions('price > 100') as $expression)
+        {
+            $sql = DB::table('orders')
+                ->select('department', 'price')
+                ->groupByRaw($expression)
+                ->toSql();
+            $this->assertEquals('select `department`, `price` from `orders` group by price > 100', $sql);
+        }
     }
 
-    public function testGroupByRawUsingExpressionWithBindings()
+    public function test_GroupByRaw_using_ExpressionWithBindings()
     {
-        $expression = new ExpressionWithBindings('price > ?', [100]);
-        DB::table('orders')
-            ->select('department', 'price')
-            ->groupByRaw($expression)
-            ->get();
-        $this->assertEquals('select `department`, `price` from `orders` group by price > ?', $this->pdo->queries[0]);
-        $this->assertEquals(1, count($this->pdo->bindings[0]), "Incorrect number of bindings");
-        $this->assertEquals([1 => 100], $this->pdo->bindings[0], "Incorrect bindings");
+        foreach ($this->makeExpressions('price > ?', [100]) as $expression)
+        {
+            DB::table('orders')
+                ->select('department', 'price')
+                ->groupByRaw($expression)
+                ->get();
+            $this->assertEquals('select `department`, `price` from `orders` group by price > ?', $this->pdo->queries[0]);
+            $this->assertEquals(1, count($this->pdo->bindings[0]), "Incorrect number of bindings");
+            $this->assertEquals([1 => 100], $this->pdo->bindings[0], "Incorrect bindings");
+        }
     }
 
-    public function testGroupByRawWithBindingsUsingExpressionWithBindings()
+    public function test_GroupByRaw_with_bindings_using_ExpressionWithBindings()
     {
-        $expression = new ExpressionWithBindings('price > ?, department > ?', [100]);
-        DB::table('orders')
-            ->select('department', 'price')
-            ->groupByRaw($expression, [1560])
-            ->get();
-        $this->assertEquals('select `department`, `price` from `orders` group by price > ?, department > ?', $this->pdo->queries[0]);
-        $this->assertEquals(2, count($this->pdo->bindings[0]), "Incorrect number of bindings");
-        $this->assertEquals([1 => 100, 2 => 1560], $this->pdo->bindings[0], "Incorrect bindings");
+        foreach ($this->makeExpressions('price > ?, department > ?', [100]) as $expression) {
+            DB::table('orders')
+                ->select('department', 'price')
+                ->groupByRaw($expression, [1560])
+                ->get();
+            $this->assertEquals('select `department`, `price` from `orders` group by price > ?, department > ?', $this->pdo->queries[0]);
+            $this->assertEquals(2, count($this->pdo->bindings[0]), "Incorrect number of bindings");
+            $this->assertEquals([1 => 100, 2 => 1560], $this->pdo->bindings[0], "Incorrect bindings");
+        }
     }
-
-    public function SqlUsingIsExpressionIsCorrect()
-    {
-
-    }
-
-    public function SqlUsingIsExpressionAndHasBindingsIsCorrect()
-    {
-
-    }
-
 }

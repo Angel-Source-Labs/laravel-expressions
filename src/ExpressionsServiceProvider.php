@@ -4,6 +4,7 @@
 namespace AngelSourceLabs\LaravelExpressions;
 
 
+use AngelSourceLabs\LaravelExpressions\Commands\Doctor;
 use AngelSourceLabs\LaravelExpressions\Database\MySqlConnection;
 use AngelSourceLabs\LaravelExpressions\Database\PostgresConnection;
 use AngelSourceLabs\LaravelExpressions\Database\SQLiteConnection;
@@ -25,6 +26,7 @@ class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         $this->bindGrammarClasses();
+        $this->bindCommands();
     }
 
     protected function bindGrammarClasses()
@@ -55,6 +57,15 @@ class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
 
                 return $connection;
             });
+        }
+    }
+
+    protected function bindCommands()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                Doctor::class,
+            ]);
         }
     }
 }

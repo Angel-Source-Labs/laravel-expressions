@@ -12,4 +12,13 @@ interface IsExpression
      * @return mixed
      */
     public function getValue();
+
+    /**
+     * Return getValue() as string
+     * This function will typically be implemented as:
+     * `return (string) $this->getValue();`
+     *
+     * @return string
+     */
+    public function __toString();
 }

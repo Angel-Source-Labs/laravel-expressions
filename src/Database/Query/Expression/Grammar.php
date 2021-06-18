@@ -10,10 +10,17 @@ use Illuminate\Database\Query\Expression;
 class Grammar
 {
     protected $value;
+    protected $driver;
 
     public static function make()
     {
         return new Grammar;
+    }
+
+    public function driver($driver = null)
+    {
+        $this->driver = $driver ?? $this->driver;
+        return $this;
     }
 
     public function mySql($string)
@@ -46,20 +53,27 @@ class Grammar
         return $this;
     }
 
-    public function __invoke($driver)
+    public function __invoke($driver = null)
     {
         return $this->resolve($driver);
     }
 
-    public function resolve($driver)
+    public function resolve($driver = null)
     {
-        if (! isset($this->value[$driver])) throw new GrammarNotDefinedForDatabaseException("Grammar not defined for database driver {$driver}\n" . print_r($this->value, true) );
+        $driver = $driver ?? $this->driver;
+        $driverMsg = $driver ?? "null";
+        if (! isset($this->value[$driver])) throw new GrammarNotDefinedForDatabaseException("Grammar not defined for database driver {$driverMsg}\n" . print_r($this->value, true) );
         return $this->value[$driver];
     }
 
-    public function expression($driver)
+    public function expression($driver = null)
     {
         return new Expression($this->resolve($driver));
+    }
+
+    public function __toString()
+    {
+        return $this->resolve();
     }
 
 }

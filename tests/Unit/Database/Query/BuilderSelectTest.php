@@ -10,11 +10,14 @@ use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 use Mockery as m;
 use Orchestra\Testbench\TestCase;
+use Tests\Unit\MakesExpressions;
 use Tests\Unit\Mocks\TestPDO;
 
 
 class BuilderSelectTest extends TestCase
 {
+    use MakesExpressions;
+
     /**
      * @var m\Mock | TestPDO
      */
@@ -33,25 +36,14 @@ class BuilderSelectTest extends TestCase
         $connection->setPdo($this->pdo);
     }
 
-    public function testSelectUsingExpressionWithBindings()
+    public function test_Select_using_ExpressionWithBindings()
     {
-        $expression = new ExpressionWithBindings("price * ? as price_with_tax", [1.0825]);
-        DB::table('orders')->select($expression)->get();
-        $this->assertEquals('select price * ? as price_with_tax from `orders`', $this->pdo->queries[0]);
-        $this->assertEquals(1, count($this->pdo->bindings[0]), "Incorrect number of bindings");
-        $this->assertEquals([1 => "1.0825"], $this->pdo->bindings[0], "Incorrect bindings");
+        foreach ($this->makeExpressions("price * ? as price_with_tax", [1.0825]) as $expression)
+        {
+            DB::table('orders')->select($expression)->get();
+            $this->assertEquals('select price * ? as price_with_tax from `orders`', $this->pdo->queries[0]);
+            $this->assertEquals(1, count($this->pdo->bindings[0]), "Incorrect number of bindings");
+            $this->assertEquals([1 => "1.0825"], $this->pdo->bindings[0], "Incorrect bindings");
+        }
     }
-
-    // TODO more tests to be sure that I didn't break Select
-
-    public function SqlUsingIsExpressionIsCorrect()
-    {
-
-    }
-
-    public function SqlUsingIsExpressionAndHasBindingsIsCorrect()
-    {
-
-    }
-
 }

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Tests\Models;
+namespace Tests\Fixtures;
 
 class Point implements GeometryInterface
 {
@@ -36,5 +36,10 @@ class Point implements GeometryInterface
     public function getSrid()
     {
         return $this->srid;
+    }
+
+    public function __toString()
+    {
+        return (string) $this->getValue();
     }
 }

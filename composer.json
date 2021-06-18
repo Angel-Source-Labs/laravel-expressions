@@ -1,10 +1,11 @@
 {
     "name": "angel-source-labs/laravel-expressions",
-    "description": "Provides expressions with bindings and expressions that can be used as column values in eloquent",
+    "description": "Enhanced Database Query Expressions for Laravel. Provides expressions with bindings and expressions that can be used as column values in eloquent",
     "scripts": {
         "test": "phpunit -c phpunit.xml.dist",
         "test:unit": "phpunit -c phpunit.xml.dist --testsuite unit",
-        "test:integration": "phpunit -c phpunit.xml.dist --testsuite integration"
+        "test:unit-laravel": "phpunit -c phpunit.xml.dist --testsuite laravel-database-unit",
+        "test:integration-laravel": "phpunit -c phpunit.xml.dist --testsuite laravel-database-integration"
     },
     "type": "library",
     "license": "private",
@@ -13,14 +14,24 @@
             "name": "Brion Finlay"
         }
     ],
+    "config": {
+        "preferred-install": {
+            "laravel/framework": "source"
+        }
+    },
     "require": {
         "php": ">=7.2",
         "laravel/framework": "^6.0|^7.0|^8.0"
     },
+    "require-dev-note": {
+        "doctrine/dbal": "^2.6|^3.0 -- laravel 7.x is only ^2.6.  two test failures with ^3.0.  Tests pass with ^2.6",
+        "orchestra/testbench": "^4.0|^5.0|^6.0"
+    },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
-        "mockery/mockery": "^1.0",
-        "orchestra/testbench": "^4.0|^5.0|^6.0"
+        "mockery/mockery": "^1.4.2",
+        "orchestra/testbench": "^4.0|^5.0|^6.0",
+        "doctrine/dbal": "^2.6"
     },
     "autoload": {
         "psr-4": {
@@ -28,9 +39,13 @@
         }
     },
     "autoload-dev": {
+        "files": [
+            "vendor/laravel/framework/tests/Database/stubs/MigrationCreatorFakeMigration.php",
+            "tests/Laravel-Framework/Tests/Integration/Database/DatabaseTestCase.php"
+        ],
         "psr-4": {
             "Tests\\": "tests/",
-            "Illuminate\\Tests\\": "tests-laravel-framework"
+            "Illuminate\\Tests\\": "vendor/laravel/framework/tests"
         }
     },
     "extra": {
@@ -38,6 +53,18 @@
             "providers": [
                 "AngelSourceLabs\\LaravelExpressions\\ExpressionsServiceProvider"
             ]
+        },
+        "merge-plugin": {
+            "include": [
+                "vendor/laravel/framework/composer.json"
+            ],
+            "recurse": true,
+            "replace": false,
+            "ignore-duplicates": true,
+            "merge-dev": true,
+            "merge-extra": false,
+            "merge-extra-deep": false,
+            "merge-scripts": false
         }
     }
 }

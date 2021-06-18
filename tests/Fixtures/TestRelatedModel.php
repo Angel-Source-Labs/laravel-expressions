@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Tests\Models;
+namespace Tests\Fixtures;
 
 
 class TestRelatedModel extends TestModel

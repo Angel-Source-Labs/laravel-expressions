@@ -5,7 +5,7 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Grammars;
 
 class MySqlGrammar extends \Illuminate\Database\Query\Grammars\MySqlGrammar
 {
-    use HasExpressionParameters;
+    use HasExpressionsWithGrammar;
 
     protected $driver = 'mysql';
 }
