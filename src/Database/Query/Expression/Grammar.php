@@ -19,7 +19,9 @@ class Grammar
 
     public function driver($driver = null)
     {
-        $this->driver = $driver ?? $this->driver;
+        if (func_num_args() == 0) return $this->driver;
+
+        $this->driver = $driver;
         return $this;
     }
 

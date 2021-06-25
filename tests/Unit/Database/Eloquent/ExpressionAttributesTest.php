@@ -2,46 +2,25 @@
 
 namespace Tests\Unit\Database\Eloquent;
 
-use AngelSourceLabs\LaravelExpressions\ExpressionsServiceProvider;
-use Illuminate\Support\Facades\DB;
-use Orchestra\Testbench\TestCase;
 use Tests\Unit\BaseTestCase;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\MySqlConnection;
 use Mockery as m;
 use Tests\Fixtures\Point;
 use Tests\Fixtures\TestModel;
 use Tests\Unit\DatabaseConnections;
-use Tests\Unit\MakesExpressions;
-use Tests\Unit\Mocks\TestPDO;
 
-class ExpressionAttributesTest extends TestCase
+class ExpressionAttributesTest extends BaseTestCase
 {
     use m\Adapter\Phpunit\MockeryPHPUnitIntegration;
     use DatabaseConnections;
-    use MakesExpressions;
 
     /**
      * @var TestModel
      */
     protected $model;
 
-    /**
-     * @var m\Mock | TestPDO
-     */
-    protected $pdo;
-
-    protected function getPackageProviders($app)
-    {
-        return [ExpressionsServiceProvider::class];
-    }
-
     public function setUp() : void
     {
         parent::setUp();
-        $this->pdo = m::mock(TestPDO::class)->makePartial();
-        $connection = DB::connection();
-        $connection->setPdo($this->pdo);
 
         $this->model = new TestModel();
     }

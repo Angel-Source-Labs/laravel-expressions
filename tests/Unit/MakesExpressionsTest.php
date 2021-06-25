@@ -76,6 +76,9 @@ class MakesExpressionsTest extends TestCase
                 "is instance of " . get_class($expression->getValue()) :
                 "is of type " . gettype($expression->getValue()))
             );
+            $this->assertNull($expression->getValue()->driver(), "Grammar driver is not null in initial state.");
+            $expression->getValue()->driver("mysql");
+            $this->assertEquals($expression->getValue()->driver(), "mysql", "Grammar driver did not set driver properly.");
         }
     }
 

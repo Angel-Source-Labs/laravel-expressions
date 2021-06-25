@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class ExpressionWithBindings extends Expression implements IsExpression, HasBindings
 {
-    private $bindings;
+    protected $bindings;
 
     public function __construct($value, array $bindings)
     {

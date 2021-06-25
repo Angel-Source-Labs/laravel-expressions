@@ -2,41 +2,68 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionAdapter;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionHasBindingsAdapter;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasExpressionsWithGrammar;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Query\Processors\Processor;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 
 class Builder extends \Illuminate\Database\Query\Builder
 {
     /**
      * The callbacks that should be invoked before the query is executed.
+     * This is a polyfill of Laravel 8 functionality to Laravel 6 and 7
      *
      * @var array
      */
-    public $beforeQueryCallbacksForExpressions = [];
+    public $beforeQueryCallbacksPolyfill = [];
 
     /**
      * array of references to expressions contained in query builder
      *
      * @var array
      */
-    protected $expressions;
+    protected $expressions = null;
+
+    /**
+     * Register a closure to be invoked before the query is executed.
+     * This is a polyfill from Laravel 8.x for Laravel 6.x and 7.x.
+     * This is used to configure expressions with grammar before compiling the query.
+     *
+     * @param callable $callback
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function beforeQueryPolyfill(callable $callback)
+    {
+        $this->beforeQueryCallbacksPolyfill[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Invoke the "before query" modification callbacks.
+     * This is a polyfill from Laravel 8.x for Laravel 6.x and 7.x.
+     * This is used to configure expressions with grammar before compiling the query.
+     *
+     * @return void
+     */
+    public function applyBeforeQueryCallbacksPolyfill()
+    {
+        foreach ($this->beforeQueryCallbacksPolyfill as $callback) {
+            $callback($this);
+        }
+
+        $this->beforeQueryCallbacksPolyfill = [];
+    }
 
     public function __construct(ConnectionInterface $connection, \Illuminate\Database\Query\Grammars\Grammar $grammar = null, Processor $processor = null)
     {
         parent::__construct($connection, $grammar, $processor);
-        $this->beforeQueryForExpressions(function (Builder $query) {
-           $queryGrammar = $query->getGrammar();
-           if (method_exists($queryGrammar, 'configureExpressionsWithGrammar'))
-               $queryGrammar->configureExpressionsWithGrammar($query);
+        $this->beforeQueryPolyfill(function (Builder $query) {
+            $this->configureExpressions();
         });
     }
 
@@ -45,30 +72,69 @@ class Builder extends \Illuminate\Database\Query\Builder
         return $value instanceof Expression || $value instanceof IsExpression;
     }
 
-    public function configureExpressions()
+    protected function configureExpressions()
     {
-        $configureGrammar = method_exists($this->getGrammar(), 'configureExpressionsWithGrammar');
+        $hasExpressionsWithGrammar = $this->queryGrammarHasExpressionsWithGrammar();
 
-        foreach($this->expressions() as &$value)
-        {
-            $value = $this->wrapIsExpressionWithAdapter($value);
-            if ($configureGrammar)
-                $this->getGrammar()->configureExpressionsWithGrammar($value);
+        foreach ($this->expressions() as &$value) {
+            $value = $this->unwrapRawDoubleExpression($value);
+            $value = $this->wrapIsExpression($value);
+            if ($hasExpressionsWithGrammar)
+                $this->configureExpressionWithGrammar($value, $hasExpressionsWithGrammar);
         }
     }
 
-    public function wrapIsExpressionWithAdapter($expression)
+    /**
+     * SelectRaw and GroupByRaw always wraps the raw sql in an expression, even if it is already an expression.
+     * This unwraps the double expression to a single expression.
+     *
+     * @param $expression
+     * @return mixed
+     */
+    protected function unwrapRawDoubleExpression($expression)
+    {
+        if (
+            get_class($expression) == Expression::class &&
+            $this->isExpression($expression->getValue())
+        )
+        {
+            return $expression->getValue();
+        }
+
+        return $expression;
+    }
+
+    protected function queryGrammarHasExpressionsWithGrammar()
+    {
+        return in_array(HasExpressionsWithGrammar::class, class_uses_recursive(get_class($this->getGrammar())));
+    }
+
+    protected function configureExpressionWithGrammar($expression, $hasExpressionsWithGrammar = false)
+    {
+        /**
+         * @var HasExpressionsWithGrammar $queryGrammar
+         */
+        $queryGrammar = $this->getGrammar();
+        if ($hasExpressionsWithGrammar || $this->queryGrammarHasExpressionsWithGrammar())
+            $queryGrammar->configureExpressionWithGrammar($expression);
+    }
+
+    public function wrapIsExpression($expression)
     {
         if ( !($expression instanceof IsExpression) ) return $expression;
-        if ($expression instanceof Expression) return $expression;
 
-        if ($expression instanceof HasBindings) return new IsExpressionHasBindingsAdapter($expression);
+        if ( $expression instanceof Expression ) return $expression;
+
+        if ( $expression instanceof HasBindings )
+            return new IsExpressionHasBindingsAdapter($expression);
+
         return new IsExpressionAdapter($expression);
     }
 
     /**
-     * Returns collection of all expressions in query builder
-     * method is memoized and can be reset by setting reset parameter to true
+     * Returns array of all expressions that have been added to the query builder
+     * method is memoized and can be reset by setting `reset` parameter to true
+     * values are by reference to value in original location in query builder
      *
      * @param false $reset set to true to regenerate the expression collection
      * @return array
@@ -97,9 +163,11 @@ class Builder extends \Illuminate\Database\Query\Builder
                 'unionOffest',
                 'unionOrders',
                 'lock',
-             ] as $component) $components[] = &$component;
+             ] as $component) {
+                $components[] = &$this->{$component};
+        }
 
-        array_walk_recursive($components, function(&$value, $key) {
+        array_walk_recursive($components, function(&$value, $key) use (&$expressions) {
             if ($this->isExpression($value))
                 $expressions[] = &$value;
         });
@@ -122,6 +190,17 @@ class Builder extends \Illuminate\Database\Query\Builder
         return parent::cleanBindings($unpackedBindings);
     }
 
+    // TODO is this no longer needed?  Who called it?  What was this previously fixing?
+    //  Looks like this was previously called by builder->where() from an `if (! $value instanceof Expression)` block
+    //  That instance would be resolved by IsExpression wrapping
+    //  - groupByRaw: It is also called by groupByRaw. look at groupByRaw test cases
+    //  - havingRaw
+    //  - whereIn
+    //  - orderByRaw
+    //  - selectRaw
+    //  - join (not yet implemented)
+    //  -
+
     /**
      * Add a binding to the query.
      *
@@ -131,84 +210,56 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @throws \InvalidArgumentException
      */
-    public function addBinding($value, $type = 'where')
-    {
-        if ($value instanceof Expression || $value instanceof isExpression) return $this;
-
-        return parent::addBinding($value, $type);
-    }
-
-
-    /**
-     * Register a closure to be invoked before the query is executed.
-     * This is a polyfill from Laravel 8.x for Laravel 6.x and 7.x.
-     * This is used to configure expressions with grammar before compiling the query.
-     *
-     * @param  callable  $callback
-     * @return \Illuminate\Database\Query\Builder
-     */
-    public function beforeQueryForExpressions(callable $callback)
-    {
-        $this->beforeQueryCallbacks[] = $callback;
-
-        return $this;
-    }
-
-    /**
-     * Invoke the "before query" modification callbacks.
-     * This is a polyfill from Laravel 8.x for Laravel 6.x and 7.x.
-     * This is used to configure expressions with grammar before compiling the query.
-     *
-     * @return void
-     */
-    public function applyBeforeQueryCallbacksForExpressions()
-    {
-        foreach ($this->beforeQueryCallbacks as $callback) {
-            $callback($this);
-        }
-
-        $this->beforeQueryCallbacks = [];
-    }
+//    public function addBinding($value, $type = 'where')
+//    {
+//        if ($this->isExpression($value)) return $this;
+//
+//        return parent::addBinding($value, $type);
+//    }
 
     public function toSql()
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::toSql();
     }
 
+    /**
+     * Exists does not have expressions to process.
+     * This method override exists to provide the before query callbacks polyfill behavior for Laravel 6.x and 7.x
+     */
     public function exists()
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::exists();
     }
 
     public function insert(array $values)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::insert($values);
     }
 
     public function insertOrIgnore(array $values)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::insertOrIgnore($values);
     }
 
     public function insertGetId(array $values, $sequence = null)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::insertGetId($values, $sequence);
     }
 
     public function insertUsing(array $columns, $query)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::insertUsing($columns, $query);
     }
 
     public function update(array $values)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::update($values);
     }
 
@@ -218,64 +269,138 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function upsert(array $values, $uniqueBy, $update = null)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::upsert($values, $uniqueBy, $update);
     }
 
     public function delete($id = null)
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         return parent::delete($id);
     }
 
+    /**
+     * Truncate does not have expressions to process.
+     * This method override exists to provide the before query callbacks polyfill behavior for Laravel 6.x and 7.x
+     */
     public function truncate()
     {
-        $this->applyBeforeQueryCallbacksForExpressions();
+        $this->applyBeforeQueryCallbacksPolyfill();
         parent::truncate();
     }
 
+    /**
+     * @param HasBindings | mixed $expression
+     * @param array $bindings
+     * @return array
+     */
+    protected function mergeExpressionBindings($expression, array $bindings)
+    {
+        return ($expression instanceof HasBindings) ? array_merge($expression->getBindings(), $bindings) : $bindings;
+    }
 
     /**
-     * @param Expression | HasBindings $expression
+     * selectRaw
+     *
+     * Call parent with merged bindings
+     *
+     * Notes:
+     * - Grammar is configured later by toSql() calling configureExpressions
+     * - Expressions are evaluated later when grammar->compileSelect calls columnize => wrap which evaluates the expression by getValue
+     *
+     * @param string | Expression | IsExpression $expression
      * @param array $bindings
      * @return Builder|void
      */
     public function selectRaw($expression, array $bindings = [])
     {
-        $bindings = ($expression instanceof HasBindings) ? array_merge($expression->getBindings(), $bindings) : $bindings;
-
-        return parent::selectRaw($expression, $bindings);
-    }
-
-    public function whereRaw($sql, $bindings = [], $boolean = 'and')
-    {
-        $bindings = ($sql instanceof HasBindings) ? array_merge($sql->getBindings(), $bindings) : $bindings;
-
-        return parent::whereRaw($sql, $bindings, $boolean);
-    }
-
-    public function havingRaw($sql, array $bindings = [], $boolean = 'and')
-    {
-        $bindings = ($sql instanceof HasBindings) ? array_merge($sql->getBindings(), $bindings) : $bindings;
-
-        return parent::havingRaw($sql, $bindings, $boolean);
-    }
-
-    public function orderByRaw($sql, $bindings = [])
-    {
-        $bindings = ($sql instanceof HasBindings) ? array_merge($sql->getBindings(), $bindings) : $bindings;
-
-        return parent::orderByRaw($sql, $bindings);
-    }
-
-    public function groupByRaw($sql, array $bindings = [])
-    {
-        $bindings = ($sql instanceof HasBindings) ? array_merge($sql->getBindings(), $bindings) : $bindings;
-
-        return parent::groupByRaw($sql, $bindings);
+        return parent::selectRaw($expression, $this->mergeExpressionBindings($expression, $bindings));
     }
 
     /**
+     * whereRaw
+     *
+     * Call parent with merged bindings
+     *
+     * Notes:
+     * - Grammar is configured later by toSql() calling configureExpressions
+     * - Expressions are evaluated later when grammar->compileWheres calls compileWheresToArray, which calls expression->__toString via concatenation
+     *
+     * @param string | Expression | IsExpression $sql
+     * @param array $bindings
+     * @param string $boolean
+     * @return Builder
+     */
+    public function whereRaw($sql, $bindings = [], $boolean = 'and')
+    {
+        return parent::whereRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
+    }
+
+    /**
+     * havingRaw
+     *
+     * Call parent with merged bindings
+     *
+     * Notes:
+     * - Grammar is configured later by toSql() calling configureExpressions
+     * - Expressions are evaluated later when grammar->compileOrders calls compileOrdersToArray, which calls expression->__toString via concatenation
+     *
+     * @param string | Expression | IsExpression $sql
+     * @param array $bindings
+     * @return Builder
+     */
+    public function havingRaw($sql, array $bindings = [], $boolean = 'and')
+    {
+        return parent::havingRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
+    }
+
+    /**
+     * orderByRaw
+     *
+     * Call parent with merged bindings
+     *
+     * Notes:
+     * - Grammar is configured later by toSql() calling configureExpressions
+     * - Expressions are evaluated later when grammar->compileOrders calls compileOrdersToArray
+     *
+     * @param string | Expression | IsExpression $sql
+     * @param array $bindings
+     * @return Builder
+     */
+    public function orderByRaw($sql, $bindings = [])
+    {
+        return parent::orderByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
+    }
+
+    /**
+     * groupByRaw
+     *
+     * Call parent with merged bindings
+     *
+     * Notes:
+     * - Grammar is configured later by toSql() calling configureExpressions
+     * - Expressions are evaluated later when grammar->compileGroups calls columnize => wrap which evaluates the expression by getValue
+     *
+     * @param string | Expression | IsExpression $sql
+     * @param array $bindings
+     * @return Builder
+     */
+    public function groupByRaw($sql, array $bindings = [])
+    {
+        return parent::groupByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
+    }
+
+    /**
+     * where
+     *
+     * 1. Resolve optional operator parameter
+     * 2. Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+     * 3. Call parent
+     * 4. Add bindings from Expression
+     *
+     * This is a partial implementation of where that handles most of the author's current use cases.
+     * Remaining cases can be added in the future as needed.
+     *
      * Handle value as expression with/without bindings for simple query where:
      * 1. column is a string representing name of a single column
      * 2. value is an expression with/without bindings
@@ -294,19 +419,19 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
-        // From parent class -
-        // Here we will make some assumptions about the operator. If only 2 values are
-        // passed to the method, we will assume that the operator is an equals sign
-        // and keep going. Otherwise, we'll require the operator to be passed in.
-        //
-        // Additional Note -
-        // This follows orWhere, which also executes this statement before calling where
+        // resolve optional operator parameter, which has the implicit value of '=' when not specified
+        // this must be done before the value can be wrapped.
         [$value, $operator] = $this->prepareValueAndOperator(
             $value, $operator, func_num_args() === 2
         );
 
+        // Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+        $value = $this->wrapIsExpression($value);
+
+        // Call parent
         parent::where($column, $operator, $value, $boolean);
 
+        // Add bindings from Expression
         if ($value instanceof HasBindings) {
             $this->addBinding(($value->getBindings()), 'where');
         }
@@ -314,8 +439,100 @@ class Builder extends \Illuminate\Database\Query\Builder
         return $this;
     }
 
+    /**
+     * whereDay
+     *
+     * 1. Resolve optional operator parameter
+     * 2. Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+     * 3. Call parent
+     * 4. Expression bindings are resolved afterwards by parent method calling addDateBasedWhere()
+     *
+     * @param string $column
+     * @param string $operator
+     * @param null $value
+     * @param string $boolean
+     * @return Builder
+     */
+    public function whereDay($column, $operator, $value = null, $boolean = 'and')
+    {
+        // resolve optional operator parameter, which has the implicit value of '=' when not specified
+        // this must be done before the value can be wrapped.
+        [$value, $operator] = $this->prepareValueAndOperator(
+            $value, $operator, func_num_args() === 2
+        );
+
+        // Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+        $value = $this->wrapIsExpression($value);
+
+        // Call parent
+        return parent::whereDay($column, $operator, $value, $boolean);
+
+        // Expression bindings are resolved afterwards by parent method calling addDateBasedWhere()
+    }
+
+    /**
+     * whereMonth
+     *
+     * 1. Resolve optional operator parameter
+     * 2. Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+     * 3. Call parent
+     * 4. Expression bindings are resolved afterwards by parent method calling addDateBasedWhere()
+     *
+     * @param string $column
+     * @param string $operator
+     * @param null $value
+     * @param string $boolean
+     * @return Builder
+     */
+    public function whereMonth($column, $operator, $value = null, $boolean = 'and')
+    {
+        // resolve optional operator parameter, which has the implicit value of '=' when not specified
+        // this must be done before the value can be wrapped.
+        [$value, $operator] = $this->prepareValueAndOperator(
+            $value, $operator, func_num_args() === 2
+        );
+
+        // Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+        $value = $this->wrapIsExpression($value);
+
+        // Call parent
+        return parent::whereMonth($column, $operator, $value, $boolean);
+
+        // Expression bindings are resolved afterwards by parent method calling addDateBasedWhere()
+    }
+
+    /*
+     * The following where-date-based methods do not need overloads
+     *
+     * whereDate
+     * whereTime
+     * whereYear
+     *
+     * 1. These methods do not have an 'if (! $value instanceof Expression)' check that requires expression wrapping
+     * 2. Expression bindings are resolved afterwards by addDateBasedWhere()
+     *
+     * Tests exist for these methods in BuilderWhereDateBasedTest to verify proper function
+     *
+     */
+
+    /**
+     * addDateBasedWhere
+     *
+     * 1. Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+     * 2. Call parent
+     * 3. Add bindings from expression
+     *
+     * @param string $type
+     * @param string $column
+     * @param string $operator
+     * @param mixed $value
+     * @param string $boolean
+     * @return $this|Builder
+     */
     protected function addDateBasedWhere($type, $column, $operator, $value, $boolean = 'and')
     {
+        $value = $this->wrapIsExpression($value);
+
         parent::addDateBasedWhere($type, $column, $operator, $value, $boolean);
 
         if ($value instanceof HasBindings) {
@@ -325,9 +542,66 @@ class Builder extends \Illuminate\Database\Query\Builder
         return $this;
     }
 
+    // TODO - no tests currently call this.  So how do I know that I needed it?
+    /**
+     * Having
+     *
+     * 1. Resolve optional operator parameter
+     * 2. Wrap IsExpression with an adapter to satisfy the parent method 'if (! $value instanceof Expression)' check
+     * 3. Call parent
+     * 4. Add bindings from expression
+     *
+     * @param string $column
+     * @param null $operator
+     * @param null $value
+     * @param string $boolean
+     * @return Builder
+     */
+    public function having($column, $operator = null, $value = null, $boolean = 'and')
+    {
+        // resolve optional operator parameter, which has the implicit value of '=' when not specified
+        // this must be done before the value can be wrapped.
+        [$value, $operator] = $this->prepareValueAndOperator(
+            $value, $operator, func_num_args() === 2
+        );
 
+        $value = $this->wrapIsExpression($value);
+
+        // Call parent
+        parent::having($column, $operator, $value, $boolean);
+
+        // Add bindings from Expression
+        if ($value instanceof HasBindings) {
+            $this->addBinding($value->getBindings(), 'where');
+        }
+
+        return $this;
+
+    }
+
+
+    /**
+     * Select query
+     *
+     * 1. Call parent
+     * 2. Add bindings from Expression
+     * 3. Expression is evaluated later in toSql()
+     *
+     * example query:
+     *  select price * ? as price_with_tax from `orders`
+     * example expression:
+     *  price * ? as price_with_tax
+     *
+     * This example query multiples the price column by a tax rate specified in the binding and returns the column as
+     * `price_with_tax`
+     *
+     * @param array|mixed|string[] $columns
+     * @return $this|Builder
+     */
     public function select($columns = ['*'])
     {
+        // TODO columns can be expressions so could configure them here.
+        //  Currently the expressions are configured in toSql before the query compiles
         $columns = is_array($columns) ? $columns : func_get_args();
 
         parent::select($columns);

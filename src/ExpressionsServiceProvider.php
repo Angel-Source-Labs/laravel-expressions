@@ -34,26 +34,31 @@ class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
         $connections = [
             'mysql' => [
                 'connection' => MySqlConnection::class,
-                'grammar' => MySqlGrammar::class,
+                'queryGrammar' => MySqlGrammar::class,
+                'schemaGrammar' => \Illuminate\Database\Schema\Grammars\MySqlGrammar::class,
             ],
             'pgsql' => [
                 'connection' => PostgresConnection::class,
-                'grammar' => PostgresGrammar::class,
+                'queryGrammar' => PostgresGrammar::class,
+                'schemaGrammar' => \Illuminate\Database\Schema\Grammars\PostgresGrammar::class,
             ],
             'sqlite' => [
                 'connection' => SQLiteConnection::class,
-                'grammar' => SQLiteGrammar::class,
+                'queryGrammar' => SQLiteGrammar::class,
+                'schemaGrammar' => \Illuminate\Database\Schema\Grammars\SQLiteGrammar::class,
             ],
             'sqlsrv' => [
                 'connection' => SqlServerConnection::class,
-                'grammar' => SqlServerGrammar::class,
+                'queryGrammar' => SqlServerGrammar::class,
+                'schemaGrammar' => \Illuminate\Database\Schema\Grammars\SqlServerGrammar::class,
             ],
         ];
 
         foreach($connections as $driver => $class) {
             Connection::resolverFor($driver, function($pdo, $database = '', $tablePrefix = '', array $config = []) use ($driver, $class) {
                 $connection = new $class['connection']($pdo, $database, $tablePrefix, $config);
-                $connection->setQueryGrammar(new $class['grammar']);
+                $connection->setQueryGrammar(new $class['queryGrammar']);
+                $connection->setSchemaGrammar(new $class['schemaGrammar']);
 
                 return $connection;
             });

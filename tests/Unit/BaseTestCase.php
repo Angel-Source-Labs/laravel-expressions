@@ -2,14 +2,37 @@
 
 namespace Tests\Unit;
 
-use Mockery;
-use PHPUnit\Framework\TestCase;
+use AngelSourceLabs\LaravelExpressions\ExpressionsServiceProvider;
+use Illuminate\Support\Facades\DB;
+use Mockery as m;
+use Orchestra\Testbench\TestCase;
+use Tests\Unit\Mocks\TestPDO;
 
 abstract class BaseTestCase extends TestCase
 {
+    use MakesExpressions;
+
+    /**
+     * @var m\Mock | TestPDO
+     */
+    protected $pdo;
+
+    protected function getPackageProviders($app)
+    {
+        return [ExpressionsServiceProvider::class];
+    }
+
+    public function setUp() : void
+    {
+        parent::setUp();
+        $this->pdo = m::mock(TestPDO::class)->makePartial();
+        $connection = DB::connection();
+        $connection->setPdo($this->pdo);
+    }
+
     public function tearDown(): void
     {
-        Mockery::close();
+        m::close();
     }
     
     protected function assertException($exceptionName, $exceptionMessage = '', $exceptionCode = 0)

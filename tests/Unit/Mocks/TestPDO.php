@@ -14,6 +14,8 @@ class TestPDO extends PDO
 
     public $counter = 1;
 
+    protected $exists = true;
+
     public function prepare($statement, $driver_options = [])
     {
         $this->queries[] = $statement;
@@ -30,10 +32,25 @@ class TestPDO extends PDO
         });
         $stmt->shouldReceive('execute');
         $stmt->shouldReceive('setFetchMode')->andReturnTrue();
-        $stmt->shouldReceive('fetchAll')->andReturn([['id' => 1, 'point' => 'POINT(1 2)']]);
+//        $stmt->shouldReceive('fetchAll')->andReturn($this->mockResults());
+        $stmt->shouldReceive('fetchAll')->andReturnUsing(function() {return $this->mockResults();});
         $stmt->shouldReceive('rowCount')->andReturn(1);
 
         return $stmt;
+    }
+
+    public function mockExists($exists = true)
+    {
+        $this->exists = $exists;
+    }
+
+    protected function mockResults() {
+        if (preg_match('/as .?exists.?/', end($this->queries))) {
+            return [['exists' => $this->exists]];
+        }
+        else {
+            return [['id' => $this->counter, 'point' => 'POINT(1 2)']];
+        }
     }
 
     public function lastInsertId($name = null)

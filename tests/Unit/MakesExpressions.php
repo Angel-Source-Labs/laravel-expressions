@@ -26,22 +26,22 @@ trait MakesExpressions
         $bindings = !isset($bindings) && $expression instanceof HasBindings ? $expression->getBindings() : $bindings;
         $grammar = ($sql instanceof Grammar) ?
             $sql :
-            Grammar::make()->mySql($sql)->postgres($sql)->sqLite($sql)->sqlServer($sql)->driver(DB::connection()->getDriverName());
+            Grammar::make()->mySql($sql)->postgres($sql)->sqLite($sql)->sqlServer($sql);
 
         if (isset($bindings)) {
             $expressions = [
                 new ExpressionWithBindings($sql, $bindings),
                 new ClassIsExpressionHasBindings($sql, $bindings),
-                new ExpressionWithBindings($grammar, $bindings),
-                new ClassIsExpressionHasBindings($grammar, $bindings)
+                new ExpressionWithBindings(clone $grammar, $bindings),
+                new ClassIsExpressionHasBindings(clone $grammar, $bindings)
             ];
         }
         else {
             $expressions = [
                 new Expression($sql),
                 new ClassIsExpression($sql),
-                new Expression($grammar),
-                new ClassIsExpression($grammar)
+                new Expression(clone $grammar),
+                new ClassIsExpression(clone $grammar)
             ];
         }
 

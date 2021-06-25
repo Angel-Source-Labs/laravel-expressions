@@ -9,6 +9,7 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithB
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasExpressionsWithGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\MySqlGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SQLiteGrammar;
@@ -102,6 +103,20 @@ class Doctor extends Command
         return $actual instanceof $expected;
     }
 
+    public function reportUsesTrait($expectedTrait, $actualClass, $message)
+    {
+        if (in_array($expectedTrait, class_uses_recursive($actualClass))) {
+            $this->info("✅ " . $message . ': ' . get_class($actualClass) . ' uses trait ' . $expectedTrait);
+            $this->passed();
+        }
+        else {
+            $this->error("❌ " . $message . ': ' . get_class($actualClass) . '.  Expected trait to be used ' . $expectedTrait);
+            $this->failed();
+        }
+
+        return $actualClass instanceof $expectedTrait;
+    }
+
     public function reportSqlContains(string $expected, string $actual, string $message = '')
     {
         $contains = Str::contains($actual, $expected);
@@ -190,7 +205,7 @@ class Doctor extends Command
         }
 
         $this->reportInstanceOf($connections[$driver]['connection'], $connection, "Connection");
-        $this->reportInstanceOf($connections[$driver]['grammar'], $connection->getQueryGrammar(), "Query Grammar");
+        $this->reportUsesTrait(HasExpressionsWithGrammar::class, $connection->getQueryGrammar(), "Query Grammar");
 
         $this->line("");
     }
