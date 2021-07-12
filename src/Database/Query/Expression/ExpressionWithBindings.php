@@ -18,6 +18,8 @@ class ExpressionWithBindings extends Expression implements IsExpression, HasBind
 
     public function getBindings() : array
     {
-        return $this->bindings;
+        return array_map(function($binding) {
+            return is_callable($binding) ? $binding() : $binding;
+        }, $this->bindings);
     }
 }

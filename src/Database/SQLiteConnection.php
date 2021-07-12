@@ -6,5 +6,5 @@ namespace AngelSourceLabs\LaravelExpressions\Database;
 
 class SQLiteConnection extends \Illuminate\Database\SQLiteConnection
 {
-    use ResolvesQueryBuilder;
+    use ResolvesBuilders;
 }

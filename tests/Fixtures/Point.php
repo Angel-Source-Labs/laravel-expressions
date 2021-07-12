@@ -5,16 +5,26 @@ namespace Tests\Fixtures;
 
 class Point implements GeometryInterface
 {
-    private $lat = 1;
-    private $lng = 2;
-    private $srid = 4236;
+    protected $lat = 1;
+    protected $lng = 2;
+    protected $srid = 4236;
 
-    private $expression;
+    protected $expression;
 
     public function __construct($lat, $lng) {
         $this->lat = $lat;
         $this->lng = $lng;
         $this->expression = new SpatialExpression($this);
+    }
+
+    public function setLat($lat)
+    {
+        $this->lat = (float) $lat;
+    }
+
+    public function setLng($lng)
+    {
+        $this->lng = (float) $lng;
     }
 
     public function getValue()

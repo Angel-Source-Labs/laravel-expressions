@@ -7,6 +7,7 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionAdapter;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionHasBindingsAdapter;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasExpressionsWithGrammar;
+use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Query\Processors\Processor;
@@ -117,6 +118,13 @@ class Builder extends \Illuminate\Database\Query\Builder
         $queryGrammar = $this->getGrammar();
         if ($hasExpressionsWithGrammar || $this->queryGrammarHasExpressionsWithGrammar())
             $queryGrammar->configureExpressionWithGrammar($expression);
+
+        /**
+         * @var Connection $connection
+         */
+        $connection = $this->getConnection();
+        $connection->getDriverName();
+        $connection->getPdo();
     }
 
     public function wrapIsExpression($expression)

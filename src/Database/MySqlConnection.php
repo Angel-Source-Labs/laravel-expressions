@@ -6,5 +6,5 @@ namespace AngelSourceLabs\LaravelExpressions\Database;
 
 class MySqlConnection extends \Illuminate\Database\MySqlConnection
 {
-    use ResolvesQueryBuilder;
+    use ResolvesBuilders;
 }

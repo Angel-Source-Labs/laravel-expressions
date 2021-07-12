@@ -7,7 +7,7 @@ namespace Tests\Fixtures;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 
-class SpatialExpression extends ExpressionWithBindings
+class EarlyBindingSpatialExpression extends ExpressionWithBindings
 {
     public function __construct(GeometryInterface $geometry)
     {
@@ -15,6 +15,6 @@ class SpatialExpression extends ExpressionWithBindings
             ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')")
             ->postgres("ST_GeomFromText(?, ?)");
 
-        parent::__construct($geomFromText, [[$geometry, "toWkt"], [$geometry, "getSrid"]]);
+        parent::__construct($geomFromText, [$geometry->toWkt(), $geometry->getSrid()]);
     }
 }

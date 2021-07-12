@@ -3,9 +3,10 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database;
 
+use Exception;
 use Illuminate\Database\Query\Builder;
 
-trait ResolvesQueryBuilder
+trait ResolvesBuilders
 {
     /**
      * Get a new query builder instance from the container.
@@ -19,5 +20,22 @@ trait ResolvesQueryBuilder
             'grammar' => $this->getQueryGrammar(),
             'processor' => $this->getPostProcessor()
         ]);
+    }
+
+    /**
+     * Get a schema builder instance for the connection from the container.
+     *
+     * @return \Illuminate\Database\Schema\MySqlBuilder
+     */
+    public function getSchemaBuilder()
+    {
+        $builder = parent::getSchemaBuilder();
+
+        try {
+            return resolve(get_class($builder), ['connection' => $this]);
+        }
+        catch (Exception $e) {
+            return $builder;
+        }
     }
 }
