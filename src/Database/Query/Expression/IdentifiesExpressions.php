@@ -6,7 +6,7 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 use Illuminate\Database\Query\Expression;
 
-trait UsesExpressions
+trait IdentifiesExpressions
 {
     /**
      * Determine if the given value is a raw expression.

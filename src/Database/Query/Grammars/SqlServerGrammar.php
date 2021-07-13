@@ -3,9 +3,9 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Grammars;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\UsesExpressions;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 
 class SqlServerGrammar extends \Illuminate\Database\Query\Grammars\SqlServerGrammar
 {
-    use UsesExpressions, HasParameterExpressionsWithGrammar;
+    use IdentifiesExpressions, HasParameterExpressionsWithGrammar;
 }

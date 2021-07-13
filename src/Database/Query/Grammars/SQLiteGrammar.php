@@ -3,9 +3,9 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Grammars;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\UsesExpressions;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 
 class SQLiteGrammar extends \Illuminate\Database\Query\Grammars\SQLiteGrammar
 {
-    use UsesExpressions, HasParameterExpressionsWithGrammar;
+    use IdentifiesExpressions, HasParameterExpressionsWithGrammar;
 }

@@ -9,7 +9,7 @@ use Illuminate\Database\Query\Expression;
 
 class GrammarConfigurator
 {
-    use UsesExpressions;
+    use IdentifiesExpressions;
 
     /**
      * @var Connection $connection;
