@@ -9,7 +9,7 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithB
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasExpressionsWithGrammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasParameterExpressionsWithGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\MySqlGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SQLiteGrammar;
@@ -205,7 +205,7 @@ class Doctor extends Command
         }
 
         $this->reportInstanceOf($connections[$driver]['connection'], $connection, "Connection");
-        $this->reportUsesTrait(HasExpressionsWithGrammar::class, $connection->getQueryGrammar(), "Query Grammar");
+        $this->reportUsesTrait(HasParameterExpressionsWithGrammar::class, $connection->getQueryGrammar(), "Query Grammar");
 
         $this->line("");
     }

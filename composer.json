@@ -21,7 +21,8 @@
     },
     "require": {
         "php": ">=7.2",
-        "laravel/framework": "^6.0|^7.0|^8.0"
+        "laravel/framework": "^6.0|^7.0|^8.0",
+        "ext-pdo": "*"
     },
     "require-dev-note": {
         "doctrine/dbal": "^2.6|^3.0 -- laravel 7.x is only ^2.6.  two test failures with ^3.0.  Tests pass with ^2.6",
@@ -41,12 +42,12 @@
     },
     "autoload-dev": {
         "files": [
-            "vendor/laravel/framework/tests/Database/stubs/MigrationCreatorFakeMigration.php",
-            "tests/Laravel-Framework/Tests/Integration/Database/DatabaseTestCase.php"
+            "vendor/laravel/framework/tests/Database/stubs/MigrationCreatorFakeMigration.php"
         ],
         "psr-4": {
             "Tests\\": "tests/",
-            "Illuminate\\Tests\\": "vendor/laravel/framework/tests"
+            "Illuminate\\Tests\\": "vendor/laravel/framework/tests",
+            "Orchestra\\Testbench\\": ["tests/Orchestra/Testbench", "vendor/orchestra/testbench-core/src"]
         }
     },
     "extra": {
@@ -54,18 +55,6 @@
             "providers": [
                 "AngelSourceLabs\\LaravelExpressions\\ExpressionsServiceProvider"
             ]
-        },
-        "merge-plugin": {
-            "include": [
-                "vendor/laravel/framework/composer.json"
-            ],
-            "recurse": true,
-            "replace": false,
-            "ignore-duplicates": true,
-            "merge-dev": true,
-            "merge-extra": false,
-            "merge-extra-deep": false,
-            "merge-scripts": false
         }
     }
 }

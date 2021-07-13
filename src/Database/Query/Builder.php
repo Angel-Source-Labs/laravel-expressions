@@ -2,11 +2,14 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query;
 
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\GrammarConfigurator;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionAdapter;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionHasBindingsAdapter;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasExpressionsWithGrammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasParameterExpressionsWithGrammar;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Expression;
@@ -28,6 +31,11 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @var array
      */
     protected $expressions = null;
+
+    /**
+     * @var GrammarConfigurator
+     */
+    protected $grammarConfigurator;
 
     /**
      * Register a closure to be invoked before the query is executed.
@@ -63,6 +71,11 @@ class Builder extends \Illuminate\Database\Query\Builder
     public function __construct(ConnectionInterface $connection, \Illuminate\Database\Query\Grammars\Grammar $grammar = null, Processor $processor = null)
     {
         parent::__construct($connection, $grammar, $processor);
+
+        $this->grammarConfigurator = new GrammarConfigurator($connection);
+        if ($this->queryGrammarHasExpressionsWithGrammar())
+            $this->getGrammar()->setGrammarConfigurator($this->grammarConfigurator);
+
         $this->beforeQueryPolyfill(function (Builder $query) {
             $this->configureExpressions();
         });
@@ -75,13 +88,10 @@ class Builder extends \Illuminate\Database\Query\Builder
 
     protected function configureExpressions()
     {
-        $hasExpressionsWithGrammar = $this->queryGrammarHasExpressionsWithGrammar();
-
         foreach ($this->expressions() as &$value) {
             $value = $this->unwrapRawDoubleExpression($value);
             $value = $this->wrapIsExpression($value);
-            if ($hasExpressionsWithGrammar)
-                $this->configureExpressionWithGrammar($value, $hasExpressionsWithGrammar);
+            $this->grammarConfigurator->configureExpression($value);
         }
     }
 
@@ -107,24 +117,7 @@ class Builder extends \Illuminate\Database\Query\Builder
 
     protected function queryGrammarHasExpressionsWithGrammar()
     {
-        return in_array(HasExpressionsWithGrammar::class, class_uses_recursive(get_class($this->getGrammar())));
-    }
-
-    protected function configureExpressionWithGrammar($expression, $hasExpressionsWithGrammar = false)
-    {
-        /**
-         * @var HasExpressionsWithGrammar $queryGrammar
-         */
-        $queryGrammar = $this->getGrammar();
-        if ($hasExpressionsWithGrammar || $this->queryGrammarHasExpressionsWithGrammar())
-            $queryGrammar->configureExpressionWithGrammar($expression);
-
-        /**
-         * @var Connection $connection
-         */
-        $connection = $this->getConnection();
-        $connection->getDriverName();
-        $connection->getPdo();
+        return $this->getGrammar() !== null && in_array(HasParameterExpressionsWithGrammar::class, class_uses_recursive(get_class($this->getGrammar())));
     }
 
     public function wrapIsExpression($expression)

@@ -65,6 +65,54 @@ class GrammarTest extends BaseTestCase
         $this->assertGrammar('select * from [users] where grammar = "sqlserver" and price > IF(state = "TX", ?, ?)');
     }
 
+    protected function grammarValue($driver = "mysql", $version = 0) {
+        return 'grammar = "' . $driver . '" and version = ' . $version;
+    }
+
+    public function test_grammar_versions_resolve()
+    {
+
+
+        $grammar = Grammar::make()
+            ->mySql($this->grammarValue("mysql"))
+            ->postgres($this->grammarValue('pgsql'));
+
+        foreach(['mysql', 'pgsql'] as $driver)
+            foreach(['2.0', '1.1', '1.0'] as $version)
+                $grammar->grammar($driver, $this->grammarValue($driver, $version), $version);
+
+        foreach(['mysql', 'pgsql'] as $driver) {
+            $this->assertEquals($this->grammarValue($driver, "2.0"), $grammar->resolve($driver, '2.0'));
+            $this->assertEquals($this->grammarValue($driver, "2.0"), $grammar->resolve($driver, '2.1'));
+            $this->assertEquals($this->grammarValue($driver, "2.0"), $grammar->resolve($driver, '3.1'));
+
+            $this->assertEquals($this->grammarValue($driver, "1.1"), $grammar->resolve($driver, '1.1'));
+            $this->assertEquals($this->grammarValue($driver, "1.1"), $grammar->resolve($driver, '1.2'));
+            $this->assertEquals($this->grammarValue($driver, "1.1"), $grammar->resolve($driver, '1.10'));
+
+            $this->assertEquals($this->grammarValue($driver, "1.0"), $grammar->resolve($driver, '1.0'));
+
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve($driver, '0'));
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve($driver, '0.0'));
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve($driver, '0.1'));
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve($driver, '0.2'));
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve($driver, '0.10'));
+        }
+    }
+
+    public function test_resolve_grammar_without_parameters()
+    {
+        $grammar = Grammar::make()
+            ->mySql($this->grammarValue("mysql"))
+            ->postgres($this->grammarValue('pgsql'));
+
+
+        foreach(['mysql', 'pgsql'] as $driver) {
+            $grammar->driver($driver)->version("4.10");
+            $this->assertEquals($this->grammarValue($driver, "0"), $grammar->resolve());
+        }
+    }
+
 }
 
 
