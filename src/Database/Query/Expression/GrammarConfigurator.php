@@ -27,6 +27,15 @@ class GrammarConfigurator
     public function configureExpression($expression)
     {
         if ($this->isExpressionWithGrammar($expression))
-            $expression->getValue()->connection($this->connection);
+            $this->configureGrammar($expression->getValue());
+    }
+
+    /**
+     * @param Grammar $grammar
+     */
+    public function configureGrammar($grammar)
+    {
+        if ($grammar instanceof Grammar)
+            $grammar->connection($this->connection);
     }
 }

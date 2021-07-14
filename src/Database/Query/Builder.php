@@ -188,6 +188,10 @@ class Builder extends \Illuminate\Database\Query\Builder
             }
         }
 
+        foreach ($unpackedBindings as $value) {
+            $this->grammarConfigurator->configureGrammar($value);
+        }
+
         return parent::cleanBindings($unpackedBindings);
     }
 
