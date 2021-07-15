@@ -8,14 +8,17 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Builder;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasParameterExpressionsWithGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\MySqlGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SQLiteGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SqlServerGrammar;
+use AngelSourceLabs\LaravelExpressions\Database\ResolvesBuilders;
 use AngelSourceLabs\LaravelExpressions\Database\SQLiteConnection;
 use AngelSourceLabs\LaravelExpressions\Database\SqlServerConnection;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Model;
@@ -204,8 +207,9 @@ class Doctor extends Command
             $this->ignored(2);
         }
 
-        $this->reportInstanceOf($connections[$driver]['connection'], $connection, "Connection");
+        $this->reportUsesTrait(ResolvesBuilders::class, $connection, "Connection");
         $this->reportUsesTrait(HasParameterExpressionsWithGrammar::class, $connection->getQueryGrammar(), "Query Grammar");
+        $this->reportUsesTrait(IdentifiesExpressions::class, $connection->getQueryGrammar(), "Query Grammar");
 
         $this->line("");
     }
@@ -268,12 +272,11 @@ class Doctor extends Command
 
         $expression = new ExpressionWithBindings($grammar, []);
         try {
-//            $sql = DB::table('users')->where('db', $expression)->toSql();
             $sql = DB::table('users')->whereRaw($expression)->toSql();
         }
         catch(Exception $e) {
             $this->failed();
-            $this->error('Exception thrown when evaluating Grammar.');
+            $this->error("Exception " . get_class($e) . " thrown when evaluating Grammar.");
             return false;
         };
 
