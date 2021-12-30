@@ -31,11 +31,11 @@ class GrammarConfigurator
     }
 
     /**
-     * @param Grammar $grammar
+     * @param ExpressionGrammar $grammar
      */
     public function configureGrammar($grammar)
     {
-        if ($grammar instanceof Grammar)
+        if ($grammar instanceof ExpressionGrammar)
             $grammar->connection($this->connection);
     }
 }

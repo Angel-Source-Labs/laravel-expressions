@@ -4,7 +4,7 @@
 namespace Tests\Unit;
 
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use Illuminate\Database\Query\Expression;
@@ -70,7 +70,7 @@ class MakesExpressionsTest extends TestCase
                 "is instance of " . get_class($expression) :
                 "is of type " . gettype($expression))
             );
-            $this->assertTrue($expression->getValue() instanceof Grammar,
+            $this->assertTrue($expression->getValue() instanceof ExpressionGrammar,
             "Expression does not have grammar.  expression->getValue() " .
             (is_object($expression->getValue()) ?
                 "is instance of " . get_class($expression->getValue()) :

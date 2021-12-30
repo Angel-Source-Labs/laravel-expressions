@@ -3,7 +3,7 @@
 namespace AngelSourceLabs\LaravelExpressions\Database\Query;
 
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\GrammarConfigurator;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;

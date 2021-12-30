@@ -15,10 +15,10 @@ object that can be created using the [DB::raw](https://laravel.com/api/8.x/Illum
 
 This package enhances Expressions with the following features
 - Add PDO-style bindings to Expressions
-- Domain design: create Expression subclasses that are semantically meaningful
+- Create Expression subclasses that are semantically meaningful
 - Assign Expressions to Eloquent attributes
 - Make any class into an Expression by implementing the IsExpression interface
-- Grammar: An Expression can produce the appropriate different grammar for each different database by using the Grammar helper class
+- Grammar: An Expression can produce the appropriate different grammar for each database by using the Grammar helper class
 
 ### Laravel versions
 The following Laravel versions are supported:
@@ -33,9 +33,9 @@ Install the package with composer
 composer require angel-source-labs/laravel-expressions
 ```
 
-# Create Expressions
+# How to Create Expressions
 ## Expression (without bindings)
-just use the `Illuminate\Database\Query\Expression` and create a new instance.
+Create a new instance of the Laravel class [Illuminate\Database\Query\Expression](https://laravel.com/api/8.x/Illuminate/Database/Query/Expression.html).
 ```
     public function testSelectRawUsingExpression()
     {
@@ -49,7 +49,7 @@ just use the `Illuminate\Database\Query\Expression` and create a new instance.
 
 `ExpressionWithBindings($value, array $bindings)`
 
-You create an expression with bindings by creating a new instance of ExpressionWithBindings.  The first parameter is the
+Create an expression with bindings by creating a new instance of [AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings](src/Database/Expression/ExpressionWithBindings.php).  The first parameter is the
 raw sql expression using `?` placeholders for the bindings.  The second parameter is an array of binding values.
 
 ```php
@@ -59,7 +59,7 @@ raw sql expression using `?` placeholders for the bindings.  The second paramete
 
 This produces the SQL `'select * from `audits` where `ip` = inet_aton(?)'` with a PDO binding of `[1 => "192.168.0.1"]`
 
-### Domain Driven Design: Make Expressions Semantically Meaningful
+### Make Expressions Semantically Meaningful
 
 You can create reusable expressions classes with semantic meaning.   For example, you may want to perform a geographic query using the `ST_GeomFromText`
 function to query matching geometries.  You might create a SpatialExpression that takes a Geometry object as a parameter:
@@ -74,8 +74,8 @@ class SpatialExpression extends ExpressionWithBindings
 }
 ```
 
-The `GeometryInterface` is an interface implemented by our geometry objects that provide accessors to produce the WKT (Well Known Text)
-and SRID (Spatial Reference Identifiers) that are used by geometry query functions and might look like this:
+In this example, the `GeometryInterface` is an interface implemented by geometry objects that provide accessors to produce the WKT (Well Known Text)
+and SRID (Spatial Reference Identifiers) that are used by geometry query functions, and might look like this:
 
 ```php
 interface GeometryInterface

@@ -4,7 +4,7 @@
 namespace Tests\Unit\Database\Query;
 
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use Illuminate\Support\Facades\DB;
 use Tests\Unit\BaseTestCase;
 
@@ -50,7 +50,7 @@ class BuilderWhereRawTest extends BaseTestCase
     {
         $driver = DB::connection()->getDriverName();
 
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql('grammar = "mysql"')
             ->postgres('grammar = "pgsql"')
             ->sqLite('grammar = "sqlite"')
@@ -69,7 +69,7 @@ class BuilderWhereRawTest extends BaseTestCase
     {
         $driver = DB::connection()->getDriverName();
 
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql('grammar = "mysql" and price > IF(state = "TX", ?, ?)')
             ->postgres('grammar = "pgsql" and price > IF(state = "TX", ?, ?)')
             ->sqLite('grammar = "sqlite" and price > IF(state = "TX", ?, ?)')

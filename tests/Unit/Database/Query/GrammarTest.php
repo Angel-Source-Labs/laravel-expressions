@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Database\Query;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use Illuminate\Support\Facades\DB;
 use Tests\Unit\BaseTestCase;
 use Tests\Unit\DatabaseConnections;
@@ -18,7 +18,7 @@ class GrammarTest extends BaseTestCase
 
     public function assertGrammar($sql)
     {
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql('grammar = "mysql" and price > IF(state = "TX", ?, ?)')
             ->postgres('grammar = "pgsql" and price > IF(state = "TX", ?, ?)')
             ->sqLite('grammar = "sqlite" and price > IF(state = "TX", ?, ?)')
@@ -73,7 +73,7 @@ class GrammarTest extends BaseTestCase
     {
 
 
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql($this->grammarValue("mysql"))
             ->postgres($this->grammarValue('pgsql'));
 
@@ -102,7 +102,7 @@ class GrammarTest extends BaseTestCase
 
     public function test_resolve_grammar_without_parameters()
     {
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql($this->grammarValue("mysql"))
             ->postgres($this->grammarValue('pgsql'));
 

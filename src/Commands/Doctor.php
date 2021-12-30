@@ -6,7 +6,7 @@ use AngelSourceLabs\LaravelExpressions\Database\MySqlConnection;
 use AngelSourceLabs\LaravelExpressions\Database\PostgresConnection;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Builder;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
@@ -264,7 +264,7 @@ class Doctor extends Command
 
         $driver = DB::connection()->getDriverName();
 
-        $grammar = Grammar::make()
+        $grammar = ExpressionGrammar::make()
             ->mySql('database = "mysql"')
             ->postgres('database = "pgsql"')
             ->sqLite('database = "sqlite"')

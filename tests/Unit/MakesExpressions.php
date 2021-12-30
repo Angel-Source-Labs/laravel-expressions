@@ -5,7 +5,7 @@ namespace Tests\Unit;
 
 
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Grammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use Illuminate\Database\Query\Expression;
@@ -24,9 +24,9 @@ trait MakesExpressions
         }
 
         $bindings = !isset($bindings) && $expression instanceof HasBindings ? $expression->getBindings() : $bindings;
-        $grammar = ($sql instanceof Grammar) ?
+        $grammar = ($sql instanceof ExpressionGrammar) ?
             $sql :
-            Grammar::make()->mySql($sql)->postgres($sql)->sqLite($sql)->sqlServer($sql);
+            ExpressionGrammar::make()->mySql($sql)->postgres($sql)->sqLite($sql)->sqlServer($sql);
 
         if (isset($bindings)) {
             $expressions = [

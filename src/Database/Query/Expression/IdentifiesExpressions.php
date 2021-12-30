@@ -24,6 +24,6 @@ trait IdentifiesExpressions
      */
     public function isExpressionWithGrammar($value)
     {
-        return $this->isExpression($value) && $value->getValue() instanceof Grammar;
+        return $this->isExpression($value) && $value->getValue() instanceof ExpressionGrammar;
     }
 }

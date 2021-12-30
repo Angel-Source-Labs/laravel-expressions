@@ -9,7 +9,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Expression;
 use PDO;
 
-class Grammar
+class ExpressionGrammar
 {
     protected $value;
     protected $connection;
@@ -19,7 +19,7 @@ class Grammar
 
     public static function make()
     {
-        return new Grammar;
+        return new ExpressionGrammar;
     }
 
     public function getVersionFromConnection(Connection $connection)
