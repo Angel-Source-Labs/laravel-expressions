@@ -6,6 +6,8 @@ namespace Tests\Fixtures;
 
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ProvidesExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ProvidesExpression;
 
 /**
  * Class ClassIsExpressionHasBindings
@@ -19,27 +21,5 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
  */
 class ClassIsExpressionHasBindings implements IsExpression, HasBindings
 {
-    protected $value;
-    protected $bindings;
-
-    public function __construct($value, array $bindings)
-    {
-        $this->value = $value;
-        $this->bindings = $bindings;
-    }
-
-    public function getBindings(): array
-    {
-        return $this->bindings;
-    }
-
-    public function getValue()
-    {
-        return $this->value;
-    }
-
-    public function __toString()
-    {
-        return (string) $this->getValue();
-    }
+    use ProvidesExpressionWithBindings;
 }

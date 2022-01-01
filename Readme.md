@@ -15,10 +15,10 @@ object that can be created using the [DB::raw](https://laravel.com/api/8.x/Illum
 
 This package enhances Expressions with the following features
 - Add PDO-style bindings to Expressions
-- Create Expression subclasses that are semantically meaningful
+- Create `Expression` subclasses that are semantically meaningful
 - Assign Expressions to Eloquent attributes
-- Make any class into an Expression by implementing the IsExpression interface
-- Grammar: An Expression can produce the appropriate different grammar for each database by using the Grammar helper class
+- Make any class into an `Expression` by implementing the `IsExpression` interface
+- `ExpressionGrammar`: An Expression can produce the appropriate different grammar for each database by using the `ExpressionGrammar` helper class
 
 ### Laravel versions
 The following Laravel versions are supported:
@@ -36,7 +36,7 @@ composer require angel-source-labs/laravel-expressions
 # How to Create Expressions
 ## Expression (without bindings)
 Create a new instance of the Laravel class [Illuminate\Database\Query\Expression](https://laravel.com/api/8.x/Illuminate/Database/Query/Expression.html).
-```
+```php
     public function testSelectRawUsingExpression()
     {
         $expression = new Expression("price as price_before_tax");
@@ -96,7 +96,7 @@ class Point implements GeometryInterface
 
     private $expression;
 
-    public function __construct($lat, $lng) {
+    public function __construct($lat, $lng, $srid = 0) {
         $this->lat = $lat;
         $this->lng = $lng;
         $this->expression = new SpatialExpression($this);
@@ -118,12 +118,9 @@ class Point implements GeometryInterface
         return $this->expression;
     }
 }
-```
 
-You can then query a point (and also any other conforming geometry object) by using this expression like this:
-```php
-    $point = new Point(44.9561062,-93.1041534);
-    DB::select($point->expression());
+$point = new Point(44.9561062,-93.1041534);
+DB::select($point->expression());
 ```
 
 ## Eloquent - Assigning Expressions to Attributes
@@ -146,7 +143,7 @@ insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?;
 ```
 
-## IsExpression and HasBindings - Turn Your Classes into Expressions
+## Interfaces: `IsExpression` and `HasBindings` - Turn Your Classes into Expressions
 
 When building domain classes, a class may already extend from another class and may not always be able to extend from
 `ExpressionWithBindings`.
@@ -154,7 +151,9 @@ When building domain classes, a class may already extend from another class and 
 You can turn any class into an expression by implementing the `IsExpression` interface, and you can add expression bindings to
 the class by implementing the `HasBindings` interface.
 
-IsExpression
+You can also use the trait `ProvidesExpression` or `ProvidesExpressionWithBindings` to add the default implementation to your class.
+
+`IsExpression`
 ```php
 interface IsExpression
 {
@@ -164,16 +163,48 @@ interface IsExpression
      * @return mixed
      */
     public function getValue();
+
+    /**
+     * Return getValue() as string
+     * This function will typically be implemented as:
+     * `return (string) $this->getValue();`
+     *
+     * @return string
+     */
+    public function __toString();
 }
 ```
 
-HasBindings
+`HasBindings`
 ```php
 interface HasBindings
 {
     public function getBindings() : array;
 }
 ```
+
+### Traits: `ProvidesExpression` and `ProvidesExpressionWithBindings` - Turn Your Classes into Expressions
+You can use the trait `ProvidesExpression` or `ProvidesExpressionWithBindings` to add the default implementation for `Expression` or `ExpressionWithBindings` to your class.
+
+Often when creating an `Expression`, you might subclass the `Expression` class, but if your class already
+extends a base class then you will not be able to.   Instead, you can use the `ProvidesExpression` trait:
+
+```php
+class PriceBeforeTax extends Price implements IsExpression
+{
+    use ProvidesExpression;
+}
+
+public function testSelectRawUsingExpression()
+{
+    $expression = new PriceBeforeTax("price as price_before_tax");
+    $sql = DB::table('orders')->selectRaw($expression)->toSql();
+    $this->assertEquals('select price as price_before_tax from `orders`', $sql);
+}
+```
+
+
+
 
 As an example, you could extend the GeometryInterface above to implement IsExpression and HasBindings for all Geometry classes
 ```php
@@ -188,26 +219,15 @@ and then implement the interface on the Point class:
 ```php
 class Point implements GeometryInterface
 {
+    use ProvidesExpressionWithBindings;
+    
     private $lat;
     private $lng;
     private $srid = 4236;
 
-    private $expression;
-
-    public function __construct($lat, $lng) {
+    public function __construct($lat, $lng, $srid = 0) {
         $this->lat = $lat;
         $this->lng = $lng;
-        $this->expression = new SpatialExpression($this);
-    }
-
-    public function getValue()
-    {
-        return $this->expression->getValue();
-    }
-
-    public function getBindings(): array
-    {
-        return $this->expression->getBindings();
     }
 
     public function toWkt()
@@ -219,6 +239,16 @@ class Point implements GeometryInterface
     public function getSrid()
     {
         return $this->srid;
+    }
+    
+    public function getBindings(): array
+    {
+        return [$this->toWKT(), $this->getSrid()];
+    }
+
+    public function getValue()
+    {
+        return "ST_GeomFromText(?, ?)";
     }
 }
 ```

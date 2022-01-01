@@ -7,15 +7,16 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
  *
  * Implements a late-binding mechanism, so that if callables are passed as bindings, they are not resolved until the bindings are resolved.
  */
-trait ProvidesBindings
+trait ProvidesExpressionWithBindings
 {
+    use ProvidesExpression;
+
     protected $bindings;
 
     public function __construct($value, array $bindings)
     {
         $this->value = $value;
         $this->bindings = $bindings;
-        parent::__construct($value);
     }
 
     public function getBindings() : array

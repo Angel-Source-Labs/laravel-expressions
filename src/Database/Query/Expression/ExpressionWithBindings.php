@@ -7,5 +7,5 @@ use Illuminate\Support\Facades\DB;
 
 class ExpressionWithBindings extends Expression implements IsExpression, HasBindings
 {
-    use ProvidesBindings;
+    use ProvidesExpressionWithBindings;
 }
