@@ -3,11 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Grammars;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\GrammarConfigurator;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\Expression;
 
 trait HasParameterExpressionsWithGrammar
 {

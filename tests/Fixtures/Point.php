@@ -32,6 +32,11 @@ class Point implements GeometryInterface
         return $this->expression->getValue();
     }
 
+    public function hasBindings(): bool
+    {
+        return $this->expression->hasBindings();
+    }
+
     public function getBindings(): array
     {
         return $this->expression->getBindings();

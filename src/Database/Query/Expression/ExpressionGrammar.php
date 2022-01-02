@@ -6,7 +6,6 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 use AngelSourceLabs\LaravelExpressions\Exceptions\GrammarNotDefinedForDatabaseException;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Expression;
 use PDO;
 
 class ExpressionGrammar

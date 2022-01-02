@@ -2,21 +2,20 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\GrammarConfigurator;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionAdapter;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpressionHasBindingsAdapter;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasParameterExpressionsWithGrammar;
-use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionInterface;
-use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Query\Expression as BaseExpression;
 use Illuminate\Database\Query\Processors\Processor;
 
 class Builder extends \Illuminate\Database\Query\Builder
 {
+    use IdentifiesExpressions;
+
     /**
      * The callbacks that should be invoked before the query is executed.
      * This is a polyfill of Laravel 8 functionality to Laravel 6 and 7
@@ -83,7 +82,7 @@ class Builder extends \Illuminate\Database\Query\Builder
 
     public function isExpression($value)
     {
-        return $value instanceof Expression || $value instanceof IsExpression;
+        return $value instanceof BaseExpression || $value instanceof IsExpression;
     }
 
     protected function configureExpressions()
@@ -105,7 +104,7 @@ class Builder extends \Illuminate\Database\Query\Builder
     protected function unwrapRawDoubleExpression($expression)
     {
         if (
-            get_class($expression) == Expression::class &&
+            get_class($expression) == BaseExpression::class &&
             $this->isExpression($expression->getValue())
         )
         {
@@ -124,10 +123,7 @@ class Builder extends \Illuminate\Database\Query\Builder
     {
         if ( !($expression instanceof IsExpression) ) return $expression;
 
-        if ( $expression instanceof Expression ) return $expression;
-
-        if ( $expression instanceof HasBindings )
-            return new IsExpressionHasBindingsAdapter($expression);
+        if ( $expression instanceof BaseExpression ) return $expression;
 
         return new IsExpressionAdapter($expression);
     }
@@ -180,7 +176,7 @@ class Builder extends \Illuminate\Database\Query\Builder
     {
         $unpackedBindings = [];
         foreach ($bindings as &$binding) {
-            if ($binding instanceof HasBindings) {
+            if ($this->isExpressionWithBindings($binding)) {
                 $unpackedBindings = array_merge($unpackedBindings, $binding->getBindings());
             }
             else {
@@ -206,15 +202,15 @@ class Builder extends \Illuminate\Database\Query\Builder
     //  - join (not yet implemented)
     //  -
 
-    /**
-     * Add a binding to the query.
-     *
-     * @param  mixed  $value
-     * @param  string  $type
-     * @return $this
-     *
-     * @throws \InvalidArgumentException
-     */
+//    /**
+//     * Add a binding to the query.
+//     *
+//     * @param  mixed  $value
+//     * @param  string  $type
+//     * @return $this
+//     *
+//     * @throws \InvalidArgumentException
+//     */
 //    public function addBinding($value, $type = 'where')
 //    {
 //        if ($this->isExpression($value)) return $this;
@@ -295,13 +291,13 @@ class Builder extends \Illuminate\Database\Query\Builder
     }
 
     /**
-     * @param HasBindings | mixed $expression
+     * @param IsExpression | mixed $expression
      * @param array $bindings
      * @return array
      */
     protected function mergeExpressionBindings($expression, array $bindings)
     {
-        return ($expression instanceof HasBindings) ? array_merge($expression->getBindings(), $bindings) : $bindings;
+        return ($this->isExpressionWithBindings($expression)) ? array_merge($expression->getBindings(), $bindings) : $bindings;
     }
 
     /**
@@ -437,7 +433,7 @@ class Builder extends \Illuminate\Database\Query\Builder
         parent::where($column, $operator, $value, $boolean);
 
         // Add bindings from Expression
-        if ($value instanceof HasBindings) {
+        if ($this->isExpressionWithBindings($value)) {
             $this->addBinding(($value->getBindings()), 'where');
         }
 
@@ -540,7 +536,7 @@ class Builder extends \Illuminate\Database\Query\Builder
 
         parent::addDateBasedWhere($type, $column, $operator, $value, $boolean);
 
-        if ($value instanceof HasBindings) {
+        if ($this->isExpressionWithBindings($value)) {
             $this->addBinding($value->getBindings(), 'where');
         }
 
@@ -576,7 +572,7 @@ class Builder extends \Illuminate\Database\Query\Builder
         parent::having($column, $operator, $value, $boolean);
 
         // Add bindings from Expression
-        if ($value instanceof HasBindings) {
+        if ($this->isExpressionWithBindings($value)) {
             $this->addBinding($value->getBindings(), 'where');
         }
 
@@ -612,7 +608,7 @@ class Builder extends \Illuminate\Database\Query\Builder
         parent::select($columns);
 
         foreach ($columns as $as => $column) {
-            if ($column instanceof HasBindings) {
+            if ($this->isExpressionWithBindings($column)) {
                 $this->bindings['select'] = array_merge($this->bindings['select'], $column->getBindings());
             }
         }

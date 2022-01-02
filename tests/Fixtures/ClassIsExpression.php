@@ -4,12 +4,11 @@
 namespace Tests\Fixtures;
 
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ProvidesExpression;
 
 /**
- * Class ClassIsExpressionHasBindings
+ * Class ClassIsExpression
  * @package Tests\Fixtures
  *
  * Test fixture to test a class that implements IsExpression and does not extend Expression.

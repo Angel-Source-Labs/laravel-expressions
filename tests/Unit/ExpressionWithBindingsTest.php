@@ -5,7 +5,7 @@ namespace Tests\Unit;
 
 
 use AngelSourceLabs\LaravelExpressions\Database\Query\Builder;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
 use AngelSourceLabs\LaravelExpressions\ExpressionsServiceProvider;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\MySqlGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
@@ -23,7 +23,7 @@ class ExpressionWithBindingsTest extends TestCase
 
     public function test_value_and_bindings()
     {
-        $expression = new ExpressionWithBindings("ST_GeomFromText(?, ?, 'axis-order=long-lat')", ['POINT(1 1)', 4236]);
+        $expression = new Expression("ST_GeomFromText(?, ?, 'axis-order=long-lat')", ['POINT(1 1)', 4236]);
         $this->assertEquals("ST_GeomFromText(?, ?, 'axis-order=long-lat')", $expression->getValue());
         $this->assertEquals(['POINT(1 1)', 4236], $expression->getBindings());
     }

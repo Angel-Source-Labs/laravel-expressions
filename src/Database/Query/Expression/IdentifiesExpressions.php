@@ -3,8 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
-
-use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Query\Expression as BaseExpression;
 
 trait IdentifiesExpressions
 {
@@ -16,11 +15,16 @@ trait IdentifiesExpressions
      */
     public function isExpression($value)
     {
-        return $value instanceof Expression || $value instanceof isExpression;
+        return $value instanceof BaseExpression || $value instanceof isExpression;
+    }
+
+    public function isExpressionWithBindings($value) : bool
+    {
+        return $value instanceof IsExpression && $value->hasBindings();
     }
 
     /**
-     * @param Expression | IsExpression $value
+     * @param BaseExpression | IsExpression $value
      */
     public function isExpressionWithGrammar($value)
     {

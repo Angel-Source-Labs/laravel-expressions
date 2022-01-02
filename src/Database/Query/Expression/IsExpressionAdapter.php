@@ -3,10 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
-
-use Illuminate\Database\Query\Expression;
-
-class IsExpressionAdapter extends \Illuminate\Database\Query\Expression
+class IsExpressionAdapter extends Expression
 {
     protected $expression;
 
@@ -22,5 +19,20 @@ class IsExpressionAdapter extends \Illuminate\Database\Query\Expression
     public function getValue()
     {
         return $this->expression->getValue();
+    }
+
+    public function __toString()
+    {
+        return $this->expression->__toString();
+    }
+
+    public function hasBindings(): bool
+    {
+        return $this->expression->hasBindings();
+    }
+
+    public function getBindings(): array
+    {
+        return $this->expression->getBindings();
     }
 }

@@ -21,4 +21,18 @@ interface IsExpression
      * @return string
      */
     public function __toString();
+
+    /**
+     * Return true if Expression has bindings
+     *
+     * @return bool
+     */
+    public function hasBindings() : bool;
+
+    /**
+     * Return bindings for Expression
+     *
+     * @return array
+     */
+    public function getBindings() : array;
 }

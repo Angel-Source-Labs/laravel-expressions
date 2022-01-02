@@ -5,7 +5,6 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Expression;
 
 class GrammarConfigurator
 {

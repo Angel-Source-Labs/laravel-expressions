@@ -3,27 +3,24 @@
 
 namespace Tests\Unit;
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
-use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Query\Expression as BaseExpression;
 use Orchestra\Testbench\TestCase;
 use Tests\Fixtures\InetAton;
 use Tests\Fixtures\Point;
 
 class MakesExpressionsTest extends TestCase
 {
-    use MakesExpressions;
+    use MakesExpressions, IdentifiesExpressions;
 
-    public function assertExpression($expressions)
+    public function assertExpressionHasNoBindings($expressions)
     {
         $expressions = is_array($expressions) ? $expressions : [$expressions];
         foreach ($expressions as $expression) {
-            $this->assertInstanceOf(Expression::class, $expression);
-            $this->assertNotInstanceOf(ExpressionWithBindings::class, $expression);
-            $this->assertNotInstanceOf(IsExpression::class, $expression);
-            $this->assertNotInstanceOf(HasBindings::class, $expression);
+            $this->assertTrue($this->isExpression($expression));
+            $this->assertFalse($this->isExpressionWithBindings($expression));
         }
     }
 
@@ -32,31 +29,17 @@ class MakesExpressionsTest extends TestCase
         $expressions = is_array($expressions) ? $expressions : [$expressions];
         foreach ($expressions as $expression) {
             $this->assertNotInstanceOf(Expression::class, $expression);
-            $this->assertNotInstanceOf(ExpressionWithBindings::class, $expression);
+            $this->assertNotInstanceOf(BaseExpression::class, $expression);
             $this->assertInstanceOf(IsExpression::class, $expression);
-            $this->assertNotInstanceOf(HasBindings::class, $expression);
         }
     }
 
-    public function assertExpressionWithBindings($expressions)
+    public function assertExpressionHasBindings($expressions)
     {
         $expressions = is_array($expressions) ? $expressions : [$expressions];
         foreach ($expressions as $expression) {
-            $this->assertInstanceOf(Expression::class, $expression);
-            $this->assertInstanceOf(ExpressionWithBindings::class, $expression);
             $this->assertInstanceOf(IsExpression::class, $expression);
-            $this->assertInstanceOf(HasBindings::class, $expression);
-        }
-    }
-
-    public function assertIsExpressionHasBindings($expressions)
-    {
-        $expressions = is_array($expressions) ? $expressions : [$expressions];
-        foreach ($expressions as $expression) {
-            $this->assertNotInstanceOf(Expression::class, $expression);
-            $this->assertNotInstanceOf(ExpressionWithBindings::class, $expression);
-            $this->assertInstanceOf(IsExpression::class, $expression);
-            $this->assertInstanceOf(HasBindings::class, $expression);
+            $this->assertTrue($this->isExpressionWithBindings($expression));
         }
     }
 
@@ -64,13 +47,13 @@ class MakesExpressionsTest extends TestCase
     {
         $expressions = is_array($expressions) ? $expressions : [$expressions];
         foreach ($expressions as $expression) {
-            $this->assertTrue($expression instanceof Expression || $expression instanceof IsExpression,
+            $this->assertTrue($this->isExpression($expression),
             "Expression is not instance of Expression or IsExpression.  Expression is instance of " .
             (is_object($expression) ?
                 "is instance of " . get_class($expression) :
                 "is of type " . gettype($expression))
             );
-            $this->assertTrue($expression->getValue() instanceof ExpressionGrammar,
+            $this->assertTrue($this->isExpressionWithGrammar($expression),
             "Expression does not have grammar.  expression->getValue() " .
             (is_object($expression->getValue()) ?
                 "is instance of " . get_class($expression->getValue()) :
@@ -84,34 +67,34 @@ class MakesExpressionsTest extends TestCase
 
     public function test_makeExpressions_no_bindings()
     {
-        [$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar] = $this->makeExpressions('sql expression');
-        $this->assertExpression([$expression, $expressionWithGrammar]);
+        [$baseExpression, $expression, $isExpression, $baseExpressionWithGrammar, $expressionWithGrammar, $isExpressionWithGrammar] = $this->makeExpressions('sql expression');
+        $this->assertExpressionHasNoBindings([$baseExpression, $expression, $isExpression, $baseExpressionWithGrammar, $expressionWithGrammar, $isExpressionWithGrammar]);
         $this->assertIsExpression([$isExpression, $isExpressionWithGrammar]);
-        $this->assertExpressionHasGrammar([$expressionWithGrammar, $isExpressionWithGrammar]);
+        $this->assertExpressionHasGrammar([$baseExpressionWithGrammar, $expressionWithGrammar, $isExpressionWithGrammar]);
     }
 
     public function test_makeExpressions_with_bindings()
     {
         [$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar] = $this->makeExpressions('sql expression (?,?)', [200, 100]);
-        $this->assertExpressionWithBindings([$expression, $expressionWithGrammar]);
-        $this->assertIsExpressionHasBindings([$isExpression, $isExpressionWithGrammar]);
+        $this->assertExpressionHasBindings([$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar]);
+        $this->assertIsExpression([$isExpression, $isExpressionWithGrammar]);
         $this->assertExpressionHasGrammar([$expressionWithGrammar, $isExpressionWithGrammar]);
     }
 
     public function test_makeExpressions_with_empty_bindings()
     {
         [$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar] = $this->makeExpressions('sql expression (?,?)', []);
-        $this->assertExpressionWithBindings([$expression, $expressionWithGrammar]);
-        $this->assertIsExpressionHasBindings([$isExpression, $isExpressionWithGrammar]);
+        $this->assertExpressionHasNoBindings([$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar]);
+        $this->assertIsExpression([$isExpression, $isExpressionWithGrammar]);
         $this->assertExpressionHasGrammar([$expressionWithGrammar, $isExpressionWithGrammar]);
     }
 
-    public function test_makeExpressions_with_domain_ExpressionWithBindings()
+    public function test_makeExpressions_with_semantic_expression_with_bindings()
     {
         $inet = new InetAton("192.168.0.1");
         [$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar, $originalExpression] = $this->makeExpressions($inet);
-        $this->assertExpressionWithBindings([$expression, $expressionWithGrammar, $originalExpression]);
-        $this->assertIsExpressionHasBindings([$isExpression, $isExpressionWithGrammar]);
+        $this->assertExpressionHasBindings([$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar, $originalExpression]);
+        $this->assertIsExpression([$isExpression, $isExpressionWithGrammar]);
         $this->assertExpressionHasGrammar([$expressionWithGrammar, $isExpressionWithGrammar]);
         $this->assertInstanceOf(InetAton::class, $originalExpression);
     }
@@ -120,8 +103,8 @@ class MakesExpressionsTest extends TestCase
     {
         $point = new Point(12, 34);
         [$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar, $originalExpression] = $this->makeExpressions($point);
-        $this->assertExpressionWithBindings([$expression, $expressionWithGrammar]);
-        $this->assertIsExpressionHasBindings([$isExpression, $isExpressionWithGrammar, $originalExpression]);
+        $this->assertExpressionHasBindings([$expression, $isExpression, $expressionWithGrammar, $isExpressionWithGrammar, $originalExpression]);
+        $this->assertIsExpression([$isExpression, $isExpressionWithGrammar, $originalExpression]);
         $this->assertExpressionHasGrammar([$expressionWithGrammar, $isExpressionWithGrammar, $originalExpression]);
         $this->assertInstanceOf(Point::class, $originalExpression);
     }

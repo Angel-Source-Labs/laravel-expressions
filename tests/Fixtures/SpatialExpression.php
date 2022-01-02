@@ -4,10 +4,10 @@
 namespace Tests\Fixtures;
 
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 
-class SpatialExpression extends ExpressionWithBindings
+class SpatialExpression extends Expression
 {
     public function __construct(GeometryInterface $geometry)
     {

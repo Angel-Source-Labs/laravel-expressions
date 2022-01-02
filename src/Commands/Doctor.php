@@ -5,9 +5,8 @@ namespace AngelSourceLabs\LaravelExpressions\Commands;
 use AngelSourceLabs\LaravelExpressions\Database\MySqlConnection;
 use AngelSourceLabs\LaravelExpressions\Database\PostgresConnection;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Builder;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings;
+use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\HasBindings;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\HasParameterExpressionsWithGrammar;
@@ -247,7 +246,7 @@ class Doctor extends Command
         $this->line("Test Expression");
         $this->line("---------------");
         
-        $expression = new ExpressionWithBindings('IF(state = "TX", ?, ?)', [200, 100]);
+        $expression = new Expression('IF(state = "TX", ?, ?)', [200, 100]);
         $query = DB::table("users")->where('price', '>', $expression);
         $sql = $query->toSql();
         $bindings = $query->getBindings();
@@ -270,7 +269,7 @@ class Doctor extends Command
             ->sqLite('database = "sqlite"')
             ->sqlServer('database = "sqlserver"');
 
-        $expression = new ExpressionWithBindings($grammar, []);
+        $expression = new Expression($grammar, []);
         try {
             $sql = DB::table('users')->whereRaw($expression)->toSql();
         }

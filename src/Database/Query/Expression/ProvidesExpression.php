@@ -8,8 +8,6 @@ namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
  */
 trait ProvidesExpression
 {
-    use IdentifiesExpressions;
-
     /**
      * The value of the expression.
      *
@@ -18,14 +16,23 @@ trait ProvidesExpression
     protected $value;
 
     /**
+     * Array of bindings for the expression.
+     *
+     * @var array
+     */
+    protected $bindings;
+
+    /**
      * Create a new raw query expression.
      *
      * @param  mixed  $value
+     * @param array $bindings
      * @return void
      */
-    public function __construct($value)
+    public function __construct($value, array $bindings = null)
     {
         $this->value = $value;
+        $this->bindings = $bindings;
     }
 
     /**
@@ -33,7 +40,8 @@ trait ProvidesExpression
      *
      * @return mixed
      */
-    public function getValue() {
+    public function getValue()
+    {
         return $this->value;
     }
 
@@ -44,7 +52,20 @@ trait ProvidesExpression
      *
      * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         return (string) $this->getValue();
+    }
+
+    public function hasBindings() : bool
+    {
+        return !is_null($this->bindings) && count($this->bindings) > 0;
+    }
+
+    public function getBindings() : array
+    {
+        return array_map(function($binding) {
+            return is_callable($binding) ? $binding() : $binding;
+        }, $this->bindings);
     }
 }
