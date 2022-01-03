@@ -33,9 +33,17 @@ Install the package with composer
 composer require angel-source-labs/laravel-expressions
 ```
 
+### package conflicts: `expressions:doctor`
+This package injects new database connection and grammar classes, and so conflicts with other packages that inject database connections and grammar classes.
+
+To test that the installation is working and not experiencing conflicts from other packages, this package includes an `artisan expressions:doctor` command
+that will run tests to verify that the database connections are resolving properly and expressions are building properly.
+
+To run the doctor, type `php artisan expressions:doctor` at the command line at the base of your Laravel project.
+
 # How to Create Expressions
 ## Expression (without bindings)
-Create a new instance of the Laravel class [Illuminate\Database\Query\Expression](https://laravel.com/api/8.x/Illuminate/Database/Query/Expression.html).
+Create an expression by creating a new instance of [AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression](src/Database/Expression/Expression.php).
 ```php
     public function testSelectRawUsingExpression()
     {
@@ -45,43 +53,36 @@ Create a new instance of the Laravel class [Illuminate\Database\Query\Expression
     }
 ```
 
-## ExpressionWithBindings
-
-`ExpressionWithBindings($value, array $bindings)`
-
-Create an expression with bindings by creating a new instance of [AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionWithBindings](src/Database/Expression/ExpressionWithBindings.php).  The first parameter is the
+## Expression (with bindings)
+Create an expression with bindings by creating a new instance of [AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression](src/Database/Expression/Expression.php).  The first parameter is the
 raw sql expression using `?` placeholders for the bindings.  The second parameter is an array of binding values.
 
 ```php
-        $expression = new ExpressionWithBindings("inet_aton(?)", ["192.168.0.1"]);
+        $expression = new Expression("inet_aton(?)", ["192.168.0.1"]);
         DB::table('audits')->where('ip', $expression)->get();
 ```
 
 This produces the SQL `'select * from `audits` where `ip` = inet_aton(?)'` with a PDO binding of `[1 => "192.168.0.1"]`
 
-### Make Expressions Semantically Meaningful
+## Make Expressions Semantically Meaningful
 
 You can create reusable expressions classes with semantic meaning.   For example, you may want to perform a geographic query using the `ST_GeomFromText`
 function to query matching geometries.  You might create a SpatialExpression that takes a Geometry object as a parameter:
 
 ```php
-class SpatialExpression extends ExpressionWithBindings
+interface GeometryInterface
+{
+    // WKT (Well Known Text) and SRID (Spatial Reference Identifiers) that are used by geometry query functions
+    public function toWkt();
+    public function getSrid();
+}
+
+class SpatialExpression extends Expression
 {
     public function __construct(GeometryInterface $geometry)
     {
         parent::__construct("ST_GeomFromText(?, ?)", [$geometry->toWkt(), $geometry->getSrid()]);
     }
-}
-```
-
-In this example, the `GeometryInterface` is an interface implemented by geometry objects that provide accessors to produce the WKT (Well Known Text)
-and SRID (Spatial Reference Identifiers) that are used by geometry query functions, and might look like this:
-
-```php
-interface GeometryInterface
-{
-    public function toWkt();
-    public function getSrid();
 }
 ```
 
@@ -105,7 +106,6 @@ class Point implements GeometryInterface
     public function toWkt()
     {
         return "POINT({$this->lng} {$this->lat})";
-
     }
 
     public function getSrid()
@@ -143,104 +143,119 @@ insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?;
 ```
 
-## Interfaces: `IsExpression` and `HasBindings` - Turn Your Classes into Expressions
+## Turn Your Classes into Expressions: `IsExpression` interface and `ProvidesExpression` trait 
 
 When building domain classes, a class may already extend from another class and may not always be able to extend from
-`ExpressionWithBindings`.
+`Expression`.
 
-You can turn any class into an expression by implementing the `IsExpression` interface, and you can add expression bindings to
-the class by implementing the `HasBindings` interface.
+You can turn any class into an expression by implementing the `IsExpression` interface.
 
-You can also use the trait `ProvidesExpression` or `ProvidesExpressionWithBindings` to add the default implementation to your class.
-
-`IsExpression`
-```php
-interface IsExpression
-{
-    /**
-     * Get the value of the expression.
-     *
-     * @return mixed
-     */
-    public function getValue();
-
-    /**
-     * Return getValue() as string
-     * This function will typically be implemented as:
-     * `return (string) $this->getValue();`
-     *
-     * @return string
-     */
-    public function __toString();
-}
-```
-
-`HasBindings`
-```php
-interface HasBindings
-{
-    public function getBindings() : array;
-}
-```
-
-### Traits: `ProvidesExpression` and `ProvidesExpressionWithBindings` - Turn Your Classes into Expressions
-You can use the trait `ProvidesExpression` or `ProvidesExpressionWithBindings` to add the default implementation for `Expression` or `ExpressionWithBindings` to your class.
-
-Often when creating an `Expression`, you might subclass the `Expression` class, but if your class already
-extends a base class then you will not be able to.   Instead, you can use the `ProvidesExpression` trait:
+You can also use the trait `ProvidesExpression` to add the default implementation to your class.
 
 ```php
-class PriceBeforeTax extends Price implements IsExpression
+class ClassIsExpression implements IsExpression
 {
     use ProvidesExpression;
 }
 
 public function testSelectRawUsingExpression()
 {
-    $expression = new PriceBeforeTax("price as price_before_tax");
+    $expression = new ClassIsExpression("price as price_before_tax");
     $sql = DB::table('orders')->selectRaw($expression)->toSql();
     $this->assertEquals('select price as price_before_tax from `orders`', $sql);
 }
 ```
 
-
-
-
-As an example, you could extend the GeometryInterface above to implement IsExpression and HasBindings for all Geometry classes
+In fact the `Expression` class is implemented using the `IsExpression` interface and `ProvidesExpression` trait.
 ```php
-interface GeometryInterface extends IsExpression, HasBindings
+use Illuminate\Database\Query\Expression as BaseExpression;
+
+class Expression extends BaseExpression implements IsExpression
 {
-    public function toWkt();
-    public function getSrid();
+    use ProvidesExpression;
 }
 ```
 
-and then implement the interface on the Point class:
+## `ExpressionGrammar`: Provide expressions with grammar differences by database
+
+Sometimes SQL expressions need to provide different grammar for different databases and for different versions of databases.
+
+This package provides an `ExpressionGrammar` class that will produce the appropriate expression for the database and version in use.
+
+For example, when working with `ST_GeomFromText()` between MySQL 8.0 vs MySQL 5.7 and Postgres, the order of latitude and longitude is different,
+and when switching between databases you might want your code base to work the same without changes.  MySQL 8.0 provides an option
+for `ST_GeomFromText()` to change the axis order. So while the grammar for Postgres will look like `ST_GeomFromText(?, ?)`,
+the grammar for MySql 8.0 will look like `ST_GeomFromText(?, ?, 'axis-order=long-lat')`.
+
+Creating an `Expression` with an `ExpressionGrammar` to support these three different grammars would look like this:
 ```php
-class Point implements GeometryInterface
+$grammar = ExpressionGrammar::make()
+        ->mySql("ST_GeomFromText(?, ?)")
+        ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')", "8.0")
+        ->postgres("ST_GeomFromText(?, ?)");
+$expression = new Expression($grammar, [$lon, $lat]);
+```
+This will resolve to the following expressions for the specified databases and versions:
+
+| database | version | result |
+|----------|---------|--------|
+| MySQL    | default | ST_GeomFromText(?, ?) |
+| MySQL    | 8.0 and higher | ST_GeomFromText(?, ?, 'axis-order=long-lat') |
+| Postgres | default | ST_GeomFromText(?, ?) |
+
+### Available Methods
+The `ExpressionGrammar` class provides a fluent interface for adding grammar expressions and has methods for each built-in Laravel driver as well
+as a generic `grammar` method that allows specifying a driver string for other databases.
+
+#### `make()`
+Creates a new Grammar instance and provides a fluent interface for adding grammar expressions.
+#### `mySql($string, $version (optional))`
+Add an expression for MySQL grammar.
+#### `postgres($string, $version (optional))`
+Add an expression for Postgres grammar.
+#### `sqLite($string, $version (optional))`
+Add an expression for SQLite grammar.
+#### `sqlServer($string, $version (optional))`
+Add an expression for SqlServer grammar.
+#### `grammar($driver, $string, $version (optional))`
+Add an expression for grammar for other database drivers.  `$driver` should match the driver string used by the Laravel query builder driver.
+For example `$grammar->postgres("ST_GeomFromText(?, ?)")` is equivalent to `$grammar->grammar("pgsql", "ST_GeomFromText(?, ?)")`.
+
+The `$version` parameter is optional.  When not specified, the grammar applies as the default.  When specified, the grammar applies to the specified version of the database or greater.
+
+`ExpressionGrammar` will throw a `GrammarNotDefinedForDatabaseException` if the Query Builder attempts to resolve an Expression for a Grammar that has not been defined for that database driver.
+
+## Example: Putting it All Together
+Using
+
+As an example, you could extend the GeometryInterface above to implement IsExpression and HasBindings for all Geometry classes
+```php
+interface GeometryInterface implements IsExpression
 {
-    use ProvidesExpressionWithBindings;
+    // WKT (Well Known Text) and SRID (Spatial Reference Identifiers) that are used by geometry query functions
+    public function toWkt();
+    public function getSrid();
+}
+
+abstract class Geometry implements GeometryInterface
+{
+    protected $srid;
     
-    private $lat;
-    private $lng;
-    private $srid = 4236;
+    /**
+     * @var ExpressionGrammar
+     */
+    protected $grammar;
 
-    public function __construct($lat, $lng, $srid = 0) {
-        $this->lat = $lat;
-        $this->lng = $lng;
-    }
-
-    public function toWkt()
+    public function __construct($srid = 0)
     {
-        return "POINT({$this->lng} {$this->lat})";
-
+        $this->srid = (int) $srid;
     }
 
-    public function getSrid()
+    public function hasBindings(): bool
     {
-        return $this->srid;
+        return true;
     }
-    
+
     public function getBindings(): array
     {
         return [$this->toWKT(), $this->getSrid()];
@@ -248,81 +263,67 @@ class Point implements GeometryInterface
 
     public function getValue()
     {
-        return "ST_GeomFromText(?, ?)";
+        return $this->grammar = $this->grammar ?? ExpressionGrammar::make()
+                    ->mySql("ST_GeomFromText(?, ?)")
+                    ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')", "8.0")
+                    ->postgres("ST_GeomFromText(?, ?)");
     }
+
+    public function __toString()
+    {
+        return (string) $this->getValue();
+    }
+}
+
+class Point extends Geometry
+{
+    protected $lat;
+    protected $lng;
+
+    public function __construct($lat, $lng, $srid = 0)
+    {
+        parent::__construct($srid);
+
+        $this->lat = (float) $lat;
+        $this->lng = (float) $lng;
+    }
+
+    public function getLat()
+    {
+        return $this->lat;
+    }
+
+    public function setLat($lat)
+    {
+        $this->lat = (float) $lat;
+    }
+
+    public function getLng()
+    {
+        return $this->lng;
+    }
+
+    public function setLng($lng)
+    {
+        $this->lng = (float) $lng;
+    }
+    
+$point = new Point(44.9561062,-93.1041534);
+$model->point = $point;
+$model->save();
 }
 ```
 
-with the Point class now implementing IsExpression and HasBindings, it is now an expression and can be used where expressions
-would be used.  You can now query a point (and also any other conforming geometry object) like this:
-```php
-    $point = new Point(44.9561062,-93.1041534);
-    DB::select($point);
-```
-
-You can also store the IsExpression class in an Eloquent model attribute:
-
-```php
-    $point = new Point(44.9561062,-93.1041534);
-    $model->point = $point;
-    $model->save();
-```
-
-which will evalaute as an expression and result in the following SQL
+which will evaluate as an expression and result in the following SQL
 ```sql
 # example insert statement
-insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";
+insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";  # MySQL 5.7, postgis
+insert into "test_models" ("point") values (ST_GeomFromText(?, ?, 'axis-order=long-lat')) returning "id";  # MySQL 8.0
 
 # example update statement
-update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?;
+update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?; # MySQL 5.7, postgis
+update "test_models" set "point" = ST_GeomFromText(?, ?, 'axis-order=long-lat') where "id" = ?; # MySQL 8.0
 ```
-
-## Grammar: Provide expressions with grammar differences by database
-
-Sometimes SQL expressions need to provide different grammar for different databases.
-
-This package provides a Grammar class that will produce the appropriate expression for the database in use.
-
-For example, when working with `ST_GeomFromText()` between MySQL and Postgres, the order of latitude and longitude is different,
-and when switching between databases you might want your code base to work the same without changes.  MySQL provides an option
-for `ST_GeomFromText()` to change the axis order. So while the grammar for Postgres will look like `ST_GeomFromText(?, ?)`,
-the grammar for MySql will look like `ST_GeomFromText(?, ?, 'axis-order=long-lat')`.
-
-The Expression for the geometry object examples above is implemented using a `SpatialExpression` class.   The `Grammar` class
-can be used to add the different expression grammars for each database:
-```php
-class SpatialExpression extends ExpressionWithBindings
-{
-    public function __construct(GeometryInterface $geometry)
-    {
-        $geomFromText = Grammar::make()
-            ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')")
-            ->postgres("ST_GeomFromText(?, ?)");
-
-        parent::__construct($geomFromText, [$geometry->toWkt(), $geometry->getSrid()]);
-    }
-}
-```
-
-`Grammar` will throw a `GrammarNotDefinedForDatabaseException` if the Query Builder attempts to resolve an Expression for a Grammar that has not been defined for that database driver.
-
-### Available Methods
-The `Grammar` class provides a fluent interface for adding grammar expressions and has methods for each built-in Laravel driver as well
-as a generic `grammar` method that allows specifying a driver string for other databases.
-
-#### `make()`
-Creates a new Grammar instance and provides a fluent interface for adding grammar expressions.
-#### `mySql($string)`
-Add an expression for MySQL grammar.
-#### `postgres($string)`
-Add an expression for Postgres grammar.
-#### `sqLite($string)`
-Add an expression for SQLite grammar.
-#### `sqlServer($string)`
-Add an expression for SqlServer grammar.
-#### `grammar($driver, $string)`
-Add an expression for grammar for other database drivers.  `$driver` should match the driver string used by the Laravel query builder driver.
-For example `$grammar->postgres("ST_GeomFromText(?, ?)")` is equivalent to `$grammar->grammar("pgsql", "ST_GeomFromText(?, ?)")`.
 
 ## Supported Query Builder Statements
 ### `select`

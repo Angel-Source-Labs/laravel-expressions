@@ -195,7 +195,7 @@ class Doctor extends Command
         $this->line("----------");
         $this->line("The Connection implements a connection to the database.  It is responsible for returning an " .
             "instance of the Query Builder that is used to evaluate Expressions and it is responsible for returning an " .
-            "instance of the Query Grammar that is used by the Grammar helper to evaluate grammar for the driver.");
+            "instance of the Query Grammar that is used by the ExpressionGrammar helper to evaluate grammar for the driver.");
 
         $connection = DB::connection();
         $driver = $connection->getDriverName();
@@ -258,7 +258,7 @@ class Doctor extends Command
 
     public function testGrammar()
     {
-        $this->line("Test Grammar helper");
+        $this->line("Test ExpressionGrammar helper");
         $this->line("-------------------");
 
         $driver = DB::connection()->getDriverName();
