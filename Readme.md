@@ -33,10 +33,10 @@ Install the package with composer
 composer require angel-source-labs/laravel-expressions
 ```
 
-### package conflicts: `expressions:doctor`
-This package injects new database connection and grammar classes, and so conflicts with other packages that inject database connections and grammar classes.
+### package conflicts: `artisan expressions:doctor`
+This package injects new database connection and grammar classes, so it potentially conflicts with other packages that inject database connections and grammar classes.
 
-To test that the installation is working and not experiencing conflicts from other packages, this package includes an `artisan expressions:doctor` command
+To test that the installation is working and is not experiencing conflicts from other packages, this package includes an `artisan expressions:doctor` command
 that will run tests to verify that the database connections are resolving properly and expressions are building properly.
 
 To run the doctor, type `php artisan expressions:doctor` at the command line at the base of your Laravel project.
@@ -66,84 +66,48 @@ This produces the SQL `'select * from `audits` where `ip` = inet_aton(?)'` with 
 
 ## Make Expressions Semantically Meaningful
 
-You can create reusable expressions classes with semantic meaning.   For example, you may want to perform a geographic query using the `ST_GeomFromText`
-function to query matching geometries.  You might create a SpatialExpression that takes a Geometry object as a parameter:
+You can create reusable expressions classes with semantic meaning.
 
 ```php
-interface GeometryInterface
+public class InetAtoN extends Expression
 {
-    // WKT (Well Known Text) and SRID (Spatial Reference Identifiers) that are used by geometry query functions
-    public function toWkt();
-    public function getSrid();
-}
-
-class SpatialExpression extends Expression
-{
-    public function __construct(GeometryInterface $geometry)
+    public function __construct($address)
     {
-        parent::__construct("ST_GeomFromText(?, ?)", [$geometry->toWkt(), $geometry->getSrid()]);
+        parent::__construct("inet_aton(?)", $address);
     }
 }
+
+DB::table('audits')->where('ip', new InetAtoN("192.168.0.1"))->get();
 ```
 
-A Geometry object can use the SpatialExpression to prepare an expression with bindings that can be used later in a geometry query.
-
-```php
-class Point implements GeometryInterface
-{
-    private $lat;
-    private $lng;
-    private $srid = 4236;
-
-    private $expression;
-
-    public function __construct($lat, $lng, $srid = 0) {
-        $this->lat = $lat;
-        $this->lng = $lng;
-        $this->expression = new SpatialExpression($this);
-    }
-    
-    public function toWkt()
-    {
-        return "POINT({$this->lng} {$this->lat})";
-    }
-
-    public function getSrid()
-    {
-        return $this->srid;
-    }
-    
-    public function expression()
-    {
-        return $this->expression;
-    }
-}
-
-$point = new Point(44.9561062,-93.1041534);
-DB::select($point->expression());
-```
-
-## Eloquent - Assigning Expressions to Attributes
+## Eloquent - Assign Expressions to Model Attributes
 
 Expressions can be stored in Eloquent model attributes and will be used in insert and update statements.
 
 ```php
-    $point = new Point(44.9561062,-93.1041534);
-    $model->point = $point->expression();
-    $model->save();
+public class Point extends Expression
+{
+    public function __construct($lat, $lng)
+    {
+        parent::__construct("ST_GeomFromText(?, ?)", [$lng, $lat]);
+    }
+}
+
+$model->point = new Point(44.9561062,-93.1041534);
+$model->save();
 ```
 
 results in the following insert or update statement depending on whether the record is new or already existing:
 
 ```sql
-# example insert statement
+# example insert statement result
 insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";
 
-# example update statement
+# example update statement result
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?;
 ```
 
-## Turn Your Classes into Expressions: `IsExpression` interface and `ProvidesExpression` trait 
+## Make Existing Classes into Expressions: `IsExpression` interface and `ProvidesExpression` trait 
 
 When building domain classes, a class may already extend from another class and may not always be able to extend from
 `Expression`.
@@ -158,7 +122,7 @@ class ClassIsExpression implements IsExpression
     use ProvidesExpression;
 }
 
-public function testSelectRawUsingExpression()
+function testSelectRawUsingExpression()
 {
     $expression = new ClassIsExpression("price as price_before_tax");
     $sql = DB::table('orders')->selectRaw($expression)->toSql();
@@ -225,111 +189,41 @@ The `$version` parameter is optional.  When not specified, the grammar applies a
 
 `ExpressionGrammar` will throw a `GrammarNotDefinedForDatabaseException` if the Query Builder attempts to resolve an Expression for a Grammar that has not been defined for that database driver.
 
-## Example: Putting it All Together
-Using
-
-As an example, you could extend the GeometryInterface above to implement IsExpression and HasBindings for all Geometry classes
+### Example: Point with ExpressionGrammar
+Revisiting the Point example from above using the ExpressionGrammar class to create appropriate grammar for MySql 5.7, MySql 8.0, and Postgres: 
 ```php
-interface GeometryInterface implements IsExpression
+public class Point extends Expression
 {
-    // WKT (Well Known Text) and SRID (Spatial Reference Identifiers) that are used by geometry query functions
-    public function toWkt();
-    public function getSrid();
-}
-
-abstract class Geometry implements GeometryInterface
-{
-    protected $srid;
-    
-    /**
-     * @var ExpressionGrammar
-     */
-    protected $grammar;
-
-    public function __construct($srid = 0)
+    public function __construct($lat, $lng)
     {
-        $this->srid = (int) $srid;
-    }
-
-    public function hasBindings(): bool
-    {
-        return true;
-    }
-
-    public function getBindings(): array
-    {
-        return [$this->toWKT(), $this->getSrid()];
-    }
-
-    public function getValue()
-    {
-        return $this->grammar = $this->grammar ?? ExpressionGrammar::make()
-                    ->mySql("ST_GeomFromText(?, ?)")
-                    ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')", "8.0")
-                    ->postgres("ST_GeomFromText(?, ?)");
-    }
-
-    public function __toString()
-    {
-        return (string) $this->getValue();
+        parent::__construct(ExpressionGrammar::make()
+            ->mySql("ST_GeomFromText(?, ?)")
+            ->mySql("ST_GeomFromText(?, ?, 'axis-order=long-lat')", "8.0")
+            ->postgres("ST_GeomFromText(?, ?)"), 
+        [$lng, $lat]);
     }
 }
 
-class Point extends Geometry
-{
-    protected $lat;
-    protected $lng;
-
-    public function __construct($lat, $lng, $srid = 0)
-    {
-        parent::__construct($srid);
-
-        $this->lat = (float) $lat;
-        $this->lng = (float) $lng;
-    }
-
-    public function getLat()
-    {
-        return $this->lat;
-    }
-
-    public function setLat($lat)
-    {
-        $this->lat = (float) $lat;
-    }
-
-    public function getLng()
-    {
-        return $this->lng;
-    }
-
-    public function setLng($lng)
-    {
-        $this->lng = (float) $lng;
-    }
-    
-$point = new Point(44.9561062,-93.1041534);
-$model->point = $point;
+$model->point = new Point(44.9561062,-93.1041534);
 $model->save();
-}
 ```
 
 which will evaluate as an expression and result in the following SQL
 ```sql
-# example insert statement
+# example insert statement result
 insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";  # MySQL 5.7, postgis
-insert into "test_models" ("point") values (ST_GeomFromText(?, ?, 'axis-order=long-lat')) returning "id";  # MySQL 8.0
+insert into "test_models" ("point") values (ST_GeomFromText(?, ?, 'axis-order=long-lat')) returning "id";  # MySQL 8.0 and greater
 
-# example update statement
+# example update statement result
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?; # MySQL 5.7, postgis
-update "test_models" set "point" = ST_GeomFromText(?, ?, 'axis-order=long-lat') where "id" = ?; # MySQL 8.0
+update "test_models" set "point" = ST_GeomFromText(?, ?, 'axis-order=long-lat') where "id" = ?; # MySQL 8.0 and greater
 ```
 
 ## Supported Query Builder Statements
 ### `select`
 Example:
 ```php
-    $expression = new ExpressionWithBindings("price * ? as price_with_tax", [1.0825]);
+    $expression = new Expression("price * ? as price_with_tax", [1.0825]);
     DB::table('orders')->select($expression)->get();
 ```
 result:
@@ -340,7 +234,7 @@ result:
 ### `selectRaw`
 Example 1:
 ```php
-    $expression = new ExpressionWithBindings("price * ? as price_with_tax", [1.0825]);
+    $expression = new Expression("price * ? as price_with_tax", [1.0825]);
     DB::table('orders')->selectRaw($expression)->get();
 ```
 result:
@@ -350,7 +244,7 @@ result:
 
 Example 2:
 ```php
-    $expression = new ExpressionWithBindings("price * ? as price_with_tax, price * ? as profit", [1.0825]);
+    $expression = new Expression("price * ? as price_with_tax, price * ? as profit", [1.0825]);
     DB::table('orders')->selectRaw($expression, [.20])->get();
 ```
 result:
@@ -361,7 +255,7 @@ result:
 ### `whereRaw` / `orWhereRaw`
 Example 1:
 ```php
-    $expression = new ExpressionWithBindings('price > IF(state = "TX", ?, 100)', [200]);
+    $expression = new Expression('price > IF(state = "TX", ?, 100)', [200]);
     DB::table('orders')->whereRaw($expression)->get();
 ```
 result:
@@ -371,7 +265,7 @@ result:
 
 Example 2:
 ```php
-    $expression = new ExpressionWithBindings('price > IF(state = "TX", ?, ?)', [200]);
+    $expression = new Expression('price > IF(state = "TX", ?, ?)', [200]);
     DB::table('orders')->whereRaw($expression, [100])->get();
 ```
 result:
@@ -382,7 +276,7 @@ result:
 ### `havingRaw` / `orHavingRaw`
 Example 1:
 ```php
-    $expression = new ExpressionWithBindings('SUM(price) > ?', [2500]);
+    $expression = new Expression('SUM(price) > ?', [2500]);
     $sql = DB::table('orders')
         ->select('department', DB::raw('SUM(price) as total_sales'))
         ->groupBy('department')
@@ -396,7 +290,7 @@ result:
 
 Example 2:
 ```php
-        $expression = new ExpressionWithBindings('SUM(price) > ? and AVG(price) > ?', [2500]);
+        $expression = new Expression('SUM(price) > ? and AVG(price) > ?', [2500]);
         $sql = DB::table('orders')
             ->select('department', DB::raw('SUM(price) as total_sales'))
             ->groupBy('department')
@@ -412,7 +306,7 @@ result:
 Example 1:
 ```php
     $ids = [12,23,34,45];
-    $expression = new ExpressionWithBindings('field(id, ?, ?, ?, ?)', $ids);
+    $expression = new Expression('field(id, ?, ?, ?, ?)', $ids);
     DB::table('orders')
         ->whereIn('id', $ids)
         ->orderByRaw($expression)
@@ -426,7 +320,7 @@ result:
 Example 2:
 ```php
     $ids = [12,23,34,45];
-    $expression = new ExpressionWithBindings('field(id, ?, ?, ?, ?)', [12,23]);
+    $expression = new Expression('field(id, ?, ?, ?, ?)', [12,23]);
     DB::table('orders')
         ->whereIn('id', $ids)
         ->orderByRaw($expression,[34,45])
@@ -441,7 +335,7 @@ result:
 ### `groupByRaw`
 Example 1:
 ```php
-    $expression = new ExpressionWithBindings('price > ?', [100]);
+    $expression = new Expression('price > ?', [100]);
     DB::table('orders')
         ->select('department', 'price')
         ->groupByRaw($expression)
@@ -454,7 +348,7 @@ result:
 
 Example 2:
 ```php
-        $expression = new ExpressionWithBindings('price > ?, department > ?', [100]);
+        $expression = new Expression('price > ?, department > ?', [100]);
         DB::table('orders')
             ->select('department', 'price')
             ->groupByRaw($expression, [1560])
@@ -468,7 +362,7 @@ result:
 ### `where` / `orWhere`
 Example:
 ```php
-    $expression = new ExpressionWithBindings("inet_aton(?)", ["192.168.0.1"]);
+    $expression = new Expression("inet_aton(?)", ["192.168.0.1"]);
     DB::table('audits')->where('ip', $expression)->get();
 ```
 
@@ -497,9 +391,9 @@ $users = DB::table('users')->where('votes', $expression)->get();
 ##### Additional Where Clauses
 [Additional Where Clauses](https://laravel.com/docs/8.x/queries#additional-where-clauses)
 
-#### Currently Unsupported Cases
+#### Currently Unimplemented / Untested Cases
 These cases are currently not supported (or at least not tested) but likely could be added.
-##### Array of Conditions
+##### Array of Conditions (currently unimplemented / untested)
 [Where Clauses](https://laravel.com/docs/8.x/queries#where-clauses)
 ```php
 $users = DB::table('users')->where([
@@ -507,7 +401,7 @@ $users = DB::table('users')->where([
     ['subscribed', '<>', '1'],
 ])->get();
 ```
-##### Logical Grouping
+##### Logical Grouping (currently unimplemented / untested)
 [Logical Grouping](https://laravel.com/docs/8.x/queries#logical-grouping)
 ```php
 $users = DB::table('users')
@@ -519,7 +413,7 @@ $users = DB::table('users')
            ->get();
 ```
 
-##### Where Exists Clauses
+##### Where Exists Clauses (currently unimplemented / untested)
 [Where Exists Clauses](https://laravel.com/docs/8.x/queries#where-exists-clauses)
 ```php
 $users = DB::table('users')
@@ -531,7 +425,7 @@ $users = DB::table('users')
            ->get();
 ```
 
-##### Subquery Where Clauses
+##### Subquery Where Clauses (currently unimplemented / untested)
 [Subquery Where Clauses](https://laravel.com/docs/8.x/queries#subquery-where-clauses)
 Case 1: Compare the results of subquery to a value:
 ```php
@@ -555,7 +449,7 @@ $incomes = Income::where('amount', '<', function ($query) {
 })->get();
 ```
 
-##### JSON Where Clauses
+##### JSON Where Clauses (currently unimplemented / untested)
 [JSON Where Clauses](https://laravel.com/docs/8.x/queries#json-where-clauses)
 ```php
 $users = DB::table('users')
