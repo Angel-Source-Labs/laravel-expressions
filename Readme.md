@@ -26,6 +26,7 @@ The following Laravel versions are supported:
 * Laravel 6.x
 * Laravel 7.x
 * Laravel 8.x
+* Laravel 9.x
 
 ### install package
 Install the package with composer
