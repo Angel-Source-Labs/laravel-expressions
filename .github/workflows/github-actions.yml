@@ -73,4 +73,4 @@ jobs:
         run: |
           sudo /etc/init.d/mysql start
           mysql -uroot -proot < docker/create-mysql-user-for-laravel-framework-test.sql
-      - run: vendor/bin/phpunit tests --cache-result-file=.phpunit.result.cache
+      - run: vendor/bin/phpunit -c phpunit.xml.dist --cache-result-file=.phpunit.result.cache
