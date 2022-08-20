@@ -72,5 +72,6 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE forge;' -uroot -proot
           mysql -uroot -proot < docker/create-mysql-user-for-laravel-framework-test.sql
       - run: vendor/bin/phpunit -c phpunit.xml.dist --cache-result-file=.phpunit.result.cache
