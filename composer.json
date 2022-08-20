@@ -2,6 +2,7 @@
     "name": "angel-source-labs/laravel-expressions",
     "description": "Enhanced Database Query Expressions for Laravel. Provides expressions with bindings and expressions that can be used as column values in eloquent",
     "scripts": {
+        "docker": "docker-compose -f docker-compose.yml up -d",
         "test": "phpunit -c phpunit.xml.dist",
         "test:unit": "phpunit -c phpunit.xml.dist --testsuite unit",
         "test:unit-laravel": "phpunit -c phpunit.xml.dist --testsuite laravel-database-unit",

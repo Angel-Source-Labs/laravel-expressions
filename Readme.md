@@ -1,17 +1,17 @@
-# Enhanced Database Query Expressions for Laravel
-
+# Expressions
+## Enhanced Database Query Expressions for Laravel
 ### What is an Expression?
 An Expression is a string of raw sql that can be used in Laravel Query Builder statements.
-The Laravel documentation presents the concept of [Raw Expressions](https://laravel.com/docs/8.x/queries#raw-expressions) as
-raw SQL strings that can be created via the `DB::raw` facade or by using any of the [raw methods](https://laravel.com/docs/8.x/queries#raw-methods):
+The Laravel documentation presents the concept of [Raw Expressions](https://laravel.com/docs/master/queries#raw-expressions) as
+raw SQL strings that can be created via the `DB::raw` facade or by using any of the [raw methods](https://laravel.com/docs/master/queries#raw-methods):
 - `selectRaw`
 - `whereRaw` / `orWhereRaw`
 - `havingRaw` / `orHavingRaw`
 - `orderByRaw`
 - `groupByRaw`
 
-Laravel represents these expressions as an [Expression](https://laravel.com/api/8.x/Illuminate/Database/Query/Expression.html)
-object that can be created using the [DB::raw](https://laravel.com/api/8.x/Illuminate/Database/Connection.html#method_raw) method.
+Laravel represents these expressions as an [Expression](https://laravel.com/api/master/Illuminate/Database/Query/Expression.html)
+object that can be created using the [DB::raw](https://laravel.com/api/master/Illuminate/Database/Connection.html#method_raw) method.
 
 This package enhances Expressions with the following features
 - Add PDO-style bindings to Expressions
@@ -35,12 +35,23 @@ composer require angel-source-labs/laravel-expressions
 ```
 
 ### package conflicts: `artisan expressions:doctor`
-This package injects new database connection and grammar classes, so it potentially conflicts with other packages that inject database connections and grammar classes.
+This package injects new database connection, grammar, and query builder classes, so it potentially conflicts with other packages that inject or override database connections, grammar, or query builder classes.
 
 To test that the installation is working and is not experiencing conflicts from other packages, this package includes an `artisan expressions:doctor` command
 that will run tests to verify that the database connections are resolving properly and expressions are building properly.
 
 To run the doctor, type `php artisan expressions:doctor` at the command line at the base of your Laravel project.
+
+#### Possible Package Conflicts
+The following are examples of packages that possibly conflict with this package.
+- [grimzy/laravel-mysql-spatial](https://github.com/grimzy/laravel-mysql-spatial)
+- [fico7489/laravel-pivot](https://github.com/fico7489/laravel-pivot)
+- [chelout/laravel-relationship-events](https://github.com/chelout/laravel-relationship-events)
+- [spatie/laravel-query-builder](https://github.com/spatie/laravel-query-builder)
+- [dwightwatson/rememberable](https://github.com/dwightwatson/rememberable)
+- [kalnoy/nestedset](https://github.com/lazychaser/laravel-nestedset)
+- [genealabs/laravel-model-caching](https://github.com/GeneaLabs/laravel-model-caching)
+
 
 # How to Create Expressions
 ## Expression (without bindings)
@@ -101,10 +112,10 @@ $model->save();
 results in the following insert or update statement depending on whether the record is new or already existing:
 
 ```sql
-# example insert statement result
+-- example insert statement result
 insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";
 
-# example update statement result
+-- example update statement result
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?;
 ```
 
@@ -172,17 +183,23 @@ This will resolve to the following expressions for the specified databases and v
 The `ExpressionGrammar` class provides a fluent interface for adding grammar expressions and has methods for each built-in Laravel driver as well
 as a generic `grammar` method that allows specifying a driver string for other databases.
 
-#### `make()`
+#### #`ExpressionGrammar::make()`
 Creates a new Grammar instance and provides a fluent interface for adding grammar expressions.
-#### `mySql($string, $version (optional))`
+
+#### #`ExpressionGrammar->mySql($string, $version (optional))`
 Add an expression for MySQL grammar.
-#### `postgres($string, $version (optional))`
+
+#### #`ExpressionGrammar->postgres($string, $version (optional))`
 Add an expression for Postgres grammar.
-#### `sqLite($string, $version (optional))`
+
+#### #`ExpressionGrammar->sqLite($string, $version (optional))`
 Add an expression for SQLite grammar.
-#### `sqlServer($string, $version (optional))`
+
+#### #`ExpressionGrammar->sqlServer($string, $version (optional))`
 Add an expression for SqlServer grammar.
-#### `grammar($driver, $string, $version (optional))`
+
+#### #`ExpressionGrammar->grammar($driver, $string, $version (optional))`
+
 Add an expression for grammar for other database drivers.  `$driver` should match the driver string used by the Laravel query builder driver.
 For example `$grammar->postgres("ST_GeomFromText(?, ?)")` is equivalent to `$grammar->grammar("pgsql", "ST_GeomFromText(?, ?)")`.
 
@@ -211,11 +228,11 @@ $model->save();
 
 which will evaluate as an expression and result in the following SQL
 ```sql
-# example insert statement result
+-- example insert statement result
 insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id";  # MySQL 5.7, postgis
 insert into "test_models" ("point") values (ST_GeomFromText(?, ?, 'axis-order=long-lat')) returning "id";  # MySQL 8.0 and greater
 
-# example update statement result
+-- example update statement result
 update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?; # MySQL 5.7, postgis
 update "test_models" set "point" = ST_GeomFromText(?, ?, 'axis-order=long-lat') where "id" = ?; # MySQL 8.0 and greater
 ```
