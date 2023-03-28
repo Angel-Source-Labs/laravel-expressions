@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase as PHPUnit;
  *
  * This file is identical across Orchestra 4.x, 5.x, and 6.x with the exception that 6.x adds the InteractsWithTime trait.
  * The InteractsWithTime trait and the Wormhole class are provided from Laravel 8.x to polyfill for Orchestra 4.x and 5.x.
+ *
+ * MocksApplicationServices is removed in Laravel 10.x.  This is replaced with a stub via composer mapping for Laravel 10.x testing.
  */
 abstract class TestCase extends PHPUnit implements Contracts\TestCase
 {
@@ -98,8 +100,10 @@ abstract class TestCase extends PHPUnit implements Contracts\TestCase
 
     public function test_ExpressionsServiceProvider_is_provided()
     {
-        if (!method_exists(app(), 'getProviders'))
-            $this->markTestSkipped('App container has been overridden.  App instance "'. get_class(app()) . '" does not have "getProviders" method.');
+        if (!method_exists(app(), 'getProviders')) {
+            $testName = (method_exists($this, "getName")) ? $this->getName() : $this->name();
+            $this->markTestSkipped(get_class($this) . ': App container has been overridden.  App instance "' . get_class(app()) . '" does not have "getProviders" method.');
+        }
         $this->assertInstanceOf(ExpressionsServiceProvider::class, head(app()->getProviders(ExpressionsServiceProvider::class)));
     }
 }

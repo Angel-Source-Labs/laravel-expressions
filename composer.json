@@ -9,7 +9,7 @@
         "test:integration-laravel": "phpunit -c phpunit.xml.dist --testsuite laravel-database-integration"
     },
     "type": "library",
-    "license": "private",
+    "license": "MIT",
     "authors": [
         {
             "name": "Brion Finlay"
@@ -23,6 +23,7 @@
     "require": {
         "php": ">=7.2.5",
         "laravel/framework": ">=6.0",
+        "angel-source-labs/laravel-expression-grammar": "*",
         "ext-pdo": "*"
     },
     "require-dev-note": {

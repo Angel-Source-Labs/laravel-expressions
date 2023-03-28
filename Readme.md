@@ -484,3 +484,6 @@ The following tests are run with this pacakge's ExpressionsServiceProvider loade
 ```shell script
 composer test
 ```
+
+## License
+Excel Seeder for Laravel is open-sourced software licensed under the MIT license.
