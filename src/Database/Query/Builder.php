@@ -98,6 +98,9 @@ class Builder extends \Illuminate\Database\Query\Builder
      * SelectRaw and GroupByRaw always wraps the raw sql in an expression, even if it is already an expression.
      * This unwraps the double expression to a single expression.
      *
+     * Laravel 6.x - 9.x ignore the parameter to $expression->getValue($this->grammar).
+     * Laravel 10.x requires the parameter to $expression->getValue($this->grammar).
+     *
      * @param $expression
      * @return mixed
      */
@@ -105,11 +108,18 @@ class Builder extends \Illuminate\Database\Query\Builder
     {
         if (
             get_class($expression) == BaseExpression::class &&
-            $this->isExpression($expression->getValue())
+            $this->isExpression($expression->getValue($this->grammar))
         )
         {
-            return $expression->getValue();
+            return $expression->getValue($this->grammar);
         }
+
+        return $expression;
+    }
+
+    protected function unwrapRawBaseExpression($expression)
+    {
+        if ($this->isBaseExpression($expression)) return $expression->getValue($this->grammar);
 
         return $expression;
     }
@@ -334,6 +344,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function whereRaw($sql, $bindings = [], $boolean = 'and')
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::whereRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
     }
 
@@ -352,6 +363,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function havingRaw($sql, array $bindings = [], $boolean = 'and')
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::havingRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
     }
 
@@ -370,6 +382,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function orderByRaw($sql, $bindings = [])
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::orderByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
     }
 
@@ -388,6 +401,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function groupByRaw($sql, array $bindings = [])
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::groupByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
     }
 

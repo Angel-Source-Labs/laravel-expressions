@@ -14,7 +14,7 @@ class BuilderUpsertTest extends BaseTestCase
     public function setUp() : void
     {
         parent::setUp();
-        if (! Semver::satisfies(app()->version(), "^8.0|^9.0") ) $this->markTestSkipped("Upsert is supported by Laravel 8.x only.  Laravel version is " . app()->version());
+        if (! Semver::satisfies(app()->version(), "^8.0|^9.0|^10.0") ) $this->markTestSkipped("Upsert is supported by Laravel 8.x - 10.x only.  Laravel version is " . app()->version());
     }
 
     public function test_Upsert_using_ExpressionWithBindings()

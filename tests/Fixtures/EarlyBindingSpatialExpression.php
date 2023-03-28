@@ -4,8 +4,8 @@
 namespace Tests\Fixtures;
 
 
+use AngelSourceLabs\LaravelExpressionGrammar\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 
 class EarlyBindingSpatialExpression extends Expression
 {

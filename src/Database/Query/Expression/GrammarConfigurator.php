@@ -4,6 +4,7 @@
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
+use AngelSourceLabs\LaravelExpressionGrammar\ExpressionGrammar;
 use Illuminate\Database\Connection;
 
 class GrammarConfigurator
@@ -22,11 +23,16 @@ class GrammarConfigurator
 
     /**
      * @param Expression | IsExpression $expression
+     *
+     * Laravel 6.x - 9.x ignore the parameter to $expression->getValue($this->connection->getQueryGrammar()).
+     * Laravel 10.x requires the parameter to $expression->getValue($this->connection->getQueryGrammar()).
+
+     *
      */
     public function configureExpression($expression)
     {
         if ($this->isExpression($expression))
-            $this->configureGrammar($expression->getValue());
+            $this->configureGrammar($expression->getValue($this->connection->getQueryGrammar()));
     }
 
     /**

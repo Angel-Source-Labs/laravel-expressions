@@ -23,6 +23,7 @@
     "require": {
         "php": ">=7.2.5",
         "laravel/framework": ">=6.0",
+        "angel-source-labs/laravel-expression-grammar": "*",
         "ext-pdo": "*"
     },
     "require-dev-note": {

@@ -4,6 +4,8 @@
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
 
+use Illuminate\Database\Grammar;
+
 interface IsExpression
 {
     /**
@@ -11,7 +13,7 @@ interface IsExpression
      *
      * @return mixed
      */
-    public function getValue();
+    public function getValue(Grammar $grammar);
 
     /**
      * Return getValue() as string

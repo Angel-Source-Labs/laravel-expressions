@@ -3,6 +3,8 @@
 
 namespace Tests\Fixtures;
 
+use Illuminate\Database\Grammar;
+
 class Point implements GeometryInterface
 {
     protected $lat = 1;
@@ -27,9 +29,9 @@ class Point implements GeometryInterface
         $this->lng = (float) $lng;
     }
 
-    public function getValue()
+    public function getValue(Grammar $grammar = null)
     {
-        return $this->expression->getValue();
+        return $this->expression->getValue($grammar);
     }
 
     public function hasBindings(): bool

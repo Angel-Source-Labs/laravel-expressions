@@ -3,6 +3,8 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
+use Illuminate\Database\Grammar;
+
 /**
  * Default implementation trait that can be used by classes implementing IsExpression
  */
@@ -38,9 +40,12 @@ trait ProvidesExpression
     /**
      * Get the value of the expression.
      *
+     * Laravel 6.x - 9.x ignore getValue parameter and default to null
+     * Laravel 10.x ignores getValue parameter.  Grammar is resolved using the ExpressionGrammar
+     *
      * @return mixed
      */
-    public function getValue()
+    public function getValue(Grammar $grammar = null)
     {
         return $this->value;
     }
