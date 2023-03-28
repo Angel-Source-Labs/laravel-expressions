@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase as PHPUnit;
  *
  * This file is identical across Orchestra 4.x, 5.x, and 6.x with the exception that 6.x adds the InteractsWithTime trait.
  * The InteractsWithTime trait and the Wormhole class are provided from Laravel 8.x to polyfill for Orchestra 4.x and 5.x.
+ *
+ * MocksApplicationServices is removed in Laravel 10.x.  This is replaced with a stub via composer mapping for Laravel 10.x testing.
  */
 abstract class TestCase extends PHPUnit implements Contracts\TestCase
 {
