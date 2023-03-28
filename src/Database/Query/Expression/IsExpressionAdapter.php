@@ -3,6 +3,8 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
+use Illuminate\Database\Grammar;
+
 class IsExpressionAdapter extends Expression
 {
     protected $expression;
@@ -16,9 +18,9 @@ class IsExpressionAdapter extends Expression
         $this->expression = $expression;
     }
 
-    public function getValue()
+    public function getValue(Grammar $grammar = null)
     {
-        return $this->expression->getValue();
+        return $this->expression->getValue($grammar);
     }
 
     public function __toString()

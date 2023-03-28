@@ -117,6 +117,13 @@ class Builder extends \Illuminate\Database\Query\Builder
         return $expression;
     }
 
+    protected function unwrapRawBaseExpression($expression)
+    {
+        if ($this->isBaseExpression($expression)) return $expression->getValue($this->grammar);
+
+        return $expression;
+    }
+
     protected function queryGrammarHasExpressionsWithGrammar()
     {
         return $this->getGrammar() !== null && in_array(HasParameterExpressionsWithGrammar::class, class_uses_recursive(get_class($this->getGrammar())));
@@ -337,6 +344,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function whereRaw($sql, $bindings = [], $boolean = 'and')
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::whereRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
     }
 
@@ -355,6 +363,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function havingRaw($sql, array $bindings = [], $boolean = 'and')
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::havingRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
     }
 
@@ -373,6 +382,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function orderByRaw($sql, $bindings = [])
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::orderByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
     }
 
@@ -391,6 +401,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function groupByRaw($sql, array $bindings = [])
     {
+        $sql = $this->unwrapRawBaseExpression($sql);
         return parent::groupByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
     }
 

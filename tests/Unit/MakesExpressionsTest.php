@@ -6,7 +6,9 @@ namespace Tests\Unit;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IdentifiesExpressions;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Expression as BaseExpression;
+use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase;
 use Tests\Fixtures\InetAton;
 use Tests\Fixtures\Point;
@@ -53,15 +55,16 @@ class MakesExpressionsTest extends TestCase
                 "is instance of " . get_class($expression) :
                 "is of type " . gettype($expression))
             );
-            $this->assertTrue($this->isExpressionWithGrammar($expression),
+            $queryGrammar = DB::connection()->getQueryGrammar();
+            $this->assertTrue($this->isExpressionWithGrammar($expression, $queryGrammar),
             "Expression does not have grammar.  expression->getValue() " .
-            (is_object($expression->getValue()) ?
-                "is instance of " . get_class($expression->getValue()) :
-                "is of type " . gettype($expression->getValue()))
+            (is_object($expression->getValue($queryGrammar)) ?
+                "is instance of " . get_class($expression->getValue($queryGrammar)) :
+                "is of type " . gettype($expression->getValue($queryGrammar)))
             );
-            $this->assertNull($expression->getValue()->driver(), "Grammar driver is not null in initial state.");
-            $expression->getValue()->driver("mysql");
-            $this->assertEquals($expression->getValue()->driver(), "mysql", "Grammar driver did not set driver properly.");
+            $this->assertNull($expression->getValue($queryGrammar)->driver(), "Grammar driver is not null in initial state.");
+            $expression->getValue($queryGrammar)->driver("mysql");
+            $this->assertEquals($expression->getValue($queryGrammar)->driver(), "mysql", "Grammar driver did not set driver properly.");
         }
     }
 
