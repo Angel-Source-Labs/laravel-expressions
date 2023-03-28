@@ -4,8 +4,8 @@
 namespace Tests\Unit;
 
 
+use AngelSourceLabs\LaravelExpressionGrammar\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\Expression;
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\IsExpression;
 use Illuminate\Database\Query\Expression as BaseExpression;
 use Tests\Fixtures\ClassIsExpression;

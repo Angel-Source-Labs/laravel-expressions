@@ -3,6 +3,7 @@
 
 namespace AngelSourceLabs\LaravelExpressions\Database\Query\Expression;
 
+use AngelSourceLabs\LaravelExpressionGrammar\ExpressionGrammar;
 use Illuminate\Database\Query\Expression as BaseExpression;
 
 trait IdentifiesExpressions

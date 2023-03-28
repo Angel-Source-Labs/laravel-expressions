@@ -98,8 +98,10 @@ abstract class TestCase extends PHPUnit implements Contracts\TestCase
 
     public function test_ExpressionsServiceProvider_is_provided()
     {
-        if (!method_exists(app(), 'getProviders'))
-            $this->markTestSkipped('App container has been overridden.  App instance "'. get_class(app()) . '" does not have "getProviders" method.');
+        if (!method_exists(app(), 'getProviders')) {
+            $testName = (method_exists($this, "getName")) ? $this->getName() : $this->name();
+            $this->markTestSkipped(get_class($this) . ': App container has been overridden.  App instance "' . get_class(app()) . '" does not have "getProviders" method.');
+        }
         $this->assertInstanceOf(ExpressionsServiceProvider::class, head(app()->getProviders(ExpressionsServiceProvider::class)));
     }
 }

@@ -4,7 +4,7 @@
 namespace Tests\Unit\Database\Query;
 
 
-use AngelSourceLabs\LaravelExpressions\Database\Query\Expression\ExpressionGrammar;
+use AngelSourceLabs\LaravelExpressionGrammar\ExpressionGrammar;
 use Illuminate\Support\Facades\DB;
 use Tests\Unit\BaseTestCase;
 
