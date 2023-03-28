@@ -11,6 +11,12 @@ on:
       - main
       - test
 jobs:
+  github-title:
+    name: (php, laravel, DBAL)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Legend
+        run: echo "This prints the test legend at the top of the Github Actions jobs"
   build-and-test:
     name: Test (p,l,d)
     strategy:
