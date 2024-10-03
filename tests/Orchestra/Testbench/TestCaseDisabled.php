@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase as PHPUnit;
  *
  * MocksApplicationServices is removed in Laravel 10.x.  This is replaced with a stub via composer mapping for Laravel 10.x testing.
  */
-abstract class TestCase extends PHPUnit implements Contracts\TestCase
+abstract class TestCase_Disabled extends PHPUnit implements Contracts\TestCase
 {
     use Concerns\Testing,
         InteractsWithAuthentication,
@@ -105,5 +105,10 @@ abstract class TestCase extends PHPUnit implements Contracts\TestCase
             $this->markTestSkipped(get_class($this) . ': App container has been overridden.  App instance "' . get_class(app()) . '" does not have "getProviders" method.');
         }
         $this->assertInstanceOf(ExpressionsServiceProvider::class, head(app()->getProviders(ExpressionsServiceProvider::class)));
+    }
+
+    public function setUpTheTestEnvironmentTraitToBeIgnored(string $use): bool
+    {
+        return false;
     }
 }

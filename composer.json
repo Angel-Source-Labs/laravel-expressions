@@ -32,7 +32,7 @@
         "laravel/framework": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0",
+        "phpunit/phpunit": "*",
         "mockery/mockery": "^1.4.2",
         "orchestra/testbench": "*",
         "doctrine/dbal": "^2.6|^3.0",
@@ -51,8 +51,14 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Illuminate\\Tests\\": "vendor/laravel/framework/tests",
-            "Illuminate\\": ["vendor/laravel/framework/src/Illuminate", "tests/Laravel-Framework/Illuminate"],
-            "Orchestra\\Testbench\\": ["tests/Orchestra/Testbench", "vendor/orchestra/testbench-core/src"]
+            "Illuminate\\": [
+                "vendor/laravel/framework/src/Illuminate",
+                "tests/Laravel-Framework/Illuminate"
+            ],
+            "Orchestra\\Testbench\\": [
+                "tests/Orchestra/Testbench",
+                "vendor/orchestra/testbench-core/src"
+            ]
         }
     },
     "extra": {
