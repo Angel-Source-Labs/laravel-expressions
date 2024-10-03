@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.3/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         executionOrder="depends,defects"
+         shortenArraysForExportThreshold="10"
+         requireCoverageMetadata="false"
+         beStrictAboutCoverageMetadata="true"
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnPhpunitDeprecations="true"
+         failOnPhpunitDeprecation="false"
+         failOnRisky="false"
+         failOnWarning="false">
+    <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+    <coverage>
+        <report>
+            <clover outputFile="build/code-coverage/clover/clover.xml"/>
+            <html outputDirectory="build/code-coverage/html/" lowUpperBound="50" highLowerBound="90"/>
+        </report>
+    </coverage>
+    <testsuites>
+        <testsuite name="laravel-database-unit">
+            <directory suffix="Test.php">./vendor/laravel/framework/tests/Database</directory>
+        </testsuite>
+        <testsuite name="laravel-database-integration">
+            <directory suffix="Test.php">./vendor/laravel/framework/tests/Integration/Database</directory>
+        </testsuite>
+        <testsuite name="unit">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <logging/>
+</phpunit>
