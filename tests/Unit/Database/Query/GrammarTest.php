@@ -14,6 +14,7 @@ class GrammarTest extends BaseTestCase
     public function tearDown() : void
     {
         $this->pdo->resetQueries();
+        parent::tearDown();
     }
 
     public function assertGrammar($sql)
