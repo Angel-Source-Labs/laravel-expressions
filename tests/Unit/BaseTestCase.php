@@ -17,10 +17,10 @@ abstract class BaseTestCase extends TestCase
      */
     protected $pdo;
 
-    protected function getPackageProviders($app)
-    {
-        return [ExpressionsServiceProvider::class];
-    }
+//    protected function getPackageProviders($app)
+//    {
+//        return [ExpressionsServiceProvider::class];
+//    }
 
     public function setUp() : void
     {
@@ -32,6 +32,8 @@ abstract class BaseTestCase extends TestCase
 
     public function tearDown(): void
     {
+        parent::tearDown();
+
         m::close();
     }
     
@@ -45,4 +47,25 @@ abstract class BaseTestCase extends TestCase
             $this->setExpectedException($exceptionName, $exceptionMessage, $exceptionCode);
         }
     }
+
+    public function test_ExpressionsServiceProvider_is_provided()
+    {
+        if (!method_exists(app(), 'getProviders')) {
+            $testName = (method_exists($this, "getName")) ? $this->getName() : $this->name();
+            $this->markTestSkipped(get_class($this) . ': App container has been overridden.  App instance "' . get_class(app()) . '" does not have "getProviders" method.');
+        }
+        $this->assertInstanceOf(ExpressionsServiceProvider::class, head(app()->getProviders(ExpressionsServiceProvider::class)));
+    }
+
+    protected function getEnvironmentSetUp($app)
+    {
+        parent::getEnvironmentSetUp($app);
+        $traits = trait_uses_recursive($this);
+        if (! isset($traits[DatabaseConnections::class]))
+            config(["database.default" => "mysql"]);
+    }
+
+//    protected function defineEnvironment($app) {
+//        config(["database.default" => "mysql"]);
+//    }
 }

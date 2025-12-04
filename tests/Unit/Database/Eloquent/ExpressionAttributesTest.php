@@ -28,6 +28,7 @@ class ExpressionAttributesTest extends BaseTestCase
     public function tearDown() : void
     {
         $this->model->getConnection()->getPdo()->resetQueries();
+        parent::tearDown();
     }
 
     public function hasCorrectInsertAndUpdateSql($insert, $insertWithId, $update)
