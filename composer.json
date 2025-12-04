@@ -24,6 +24,7 @@
         "php": ">=7.3",
         "laravel/framework": ">=6.0",
         "angel-source-labs/laravel-expression-grammar": "*",
+        "composer/semver": "*",
         "ext-pdo": "*"
     },
     "require-dev-note": {
@@ -36,7 +37,6 @@
         "mockery/mockery": "^1.4.2",
         "orchestra/testbench": "*",
         "doctrine/dbal": "^2.6|^3.0",
-        "composer/semver": "*",
         "symplify/easy-ci": "*"
     },
     "autoload": {
