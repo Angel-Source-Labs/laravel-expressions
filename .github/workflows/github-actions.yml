@@ -26,11 +26,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
-        laravel: [^6.0, ^7.0, ^8.0, ^9.0, ^10.0, ^11.0]
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
+        laravel: [^7.0, ^8.0, ^9.0, ^10.0, ^11.0, ^12.0]
         dbal: [^2.6, ^3.0]
-#        php: ["7.4"]
-#        laravel: [^8.0]
+#        php: ["8.4"]
+#        laravel: [^12.0]
 #        dbal: [^3.0]
         exclude:
           - php: 7.2
@@ -41,24 +41,34 @@ jobs:
             laravel: ^10.0
           - php: 7.2
             laravel: ^11.0
+          - php: 7.2
+            laravel: ^12.0
           - php: 7.3
             laravel: ^9.0
           - php: 7.3
             laravel: ^10.0
           - php: 7.3
             laravel: ^11.0
+          - php: 7.3
+            laravel: ^12.0
           - php: 7.4
             laravel: ^9.0
           - php: 7.4
             laravel: ^10.0
           - php: 7.4
             laravel: ^11.0
+          - php: 7.4
+            laravel: ^12.0
           - php: 8.0
             laravel: ^5.8
+          - php: 8.0
+            laravel: ^9.0
           - php: 8.0
             laravel: ^10.0
           - php: 8.0
             laravel: ^11.0
+          - php: 8.0
+            laravel: ^12.0
           - php: 8.1
             laravel: ^5.8
           - php: 8.1
@@ -67,6 +77,8 @@ jobs:
             laravel: ^7.0
           - php: 8.1
             laravel: ^11.0
+          - php: 8.1
+            laravel: ^12.0
           - php: 8.2
             laravel: ^5.8
           - php: 8.2
@@ -79,6 +91,12 @@ jobs:
             laravel: ^6.0
           - php: 8.3
             laravel: ^7.0
+          - php: 8.4
+            laravel: ^7.0
+          - php: 8.4
+            laravel: ^8.0
+          - php: 8.4
+            laravel: ^9.0
           - laravel: ^5.8
             dbal: ^3.0
           - laravel: ^6.0
@@ -89,6 +107,8 @@ jobs:
             dbal: ^2.6
           - laravel: ^11.0
             dbal: ^2.6
+          - laravel: ^12.0
+            dbal: ^2.6
 
 
     runs-on: ubuntu-latest
@@ -98,8 +118,28 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: >
+            mbstring,
+            pdo_mysql,
+            pdo_pgsql,
+            pgsql,
+            sqlite,
+            sqlite3,
+            pdo_sqlite,
+            gmp
 
-      - uses: "ramsey/composer-install@v3"
+      # Local-only fallback when running with `act`
+      - name: Install dependencies (local act)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          composer update \
+            --no-interaction --no-progress --ansi \
+            --with "laravel/framework:${{ matrix.laravel }}" \
+            --with "doctrine/dbal:${{ matrix.dbal }}"
+
+      # Normal GitHub Actions path
+      - uses: ramsey/composer-install@v3
+        if: ${{ env.ACT != 'true' }}
         with:
           dependency-versions: "highest"
           composer-options: "--with laravel/framework:${{ matrix.laravel }} --with doctrine/dbal:${{ matrix.dbal }}"
@@ -113,6 +153,13 @@ jobs:
           command: pwd;docker compose up -d
       - name: List Database Containers
         run: docker compose ps
+
+      - name: Install MySQL client (for act)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          apt-get update
+          apt-get install -y default-mysql-client
+
       - name: Wait for MySQL
         run: |
           while ! mysqladmin ping --host=127.0.0.1 --port=3306 --silent; do
@@ -126,6 +173,8 @@ jobs:
       - name: Run Laravel /framework/tests/Database unit tests
         run: vendor/phpunit/phpunit/phpunit --testsuite laravel-database-unit
       - name: Run Laravel /framework/tests/Integration/Database integration Tests
+        # Version 11 has a SQLite bug regarding database locks.
+        if: ${{ matrix.laravel != '^11.0' }}
         run: vendor/phpunit/phpunit/phpunit --testsuite laravel-database-integration
 
 #      - name: 'App Package-Inclusion Test: Create Laravel Project'

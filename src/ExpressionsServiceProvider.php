@@ -57,8 +57,24 @@ class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
         foreach($connections as $driver => $class) {
             Connection::resolverFor($driver, function($pdo, $database = '', $tablePrefix = '', array $config = []) use ($driver, $class) {
                 $connection = new $class['connection']($pdo, $database, $tablePrefix, $config);
-                $connection->setQueryGrammar(new $class['queryGrammar']);
-                $connection->setSchemaGrammar(new $class['schemaGrammar']);
+
+                // Detect at runtime whether the grammar constructors expect a Connection argument
+                // (introduced in Laravel 12). This avoids relying on app()->version() which may
+                // not exist on older containers and is more robust across framework versions.
+
+                $queryGrammarClass = $class['queryGrammar'];
+
+                $queryCtor = (new \ReflectionClass($queryGrammarClass))->getConstructor();
+
+                $queryNeedsConn = $queryCtor && $queryCtor->getNumberOfRequiredParameters() > 0;
+
+                $connection->setQueryGrammar($queryNeedsConn
+                    ? new $queryGrammarClass($connection)
+                    : new $queryGrammarClass);
+
+                // Let Laravel manage the default schema grammar so runtime toggles (e.g., index prefixing)
+                // are respected across framework versions and test scenarios.
+                $connection->useDefaultSchemaGrammar();
 
                 return $connection;
             });

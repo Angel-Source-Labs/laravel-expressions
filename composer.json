@@ -16,6 +16,13 @@
         }
     ],
     "config": {
+        "audit": {
+          "ignore": [
+            "PKSA-8qx3-n5y5-vvnd",
+            "PKSA-rqc2-tcc6-nc79",
+            "PKSA-fndg-qryc-dyc9"
+          ]
+        },
         "preferred-install": {
             "laravel/framework": "source"
         }
@@ -24,6 +31,7 @@
         "php": ">=7.3",
         "laravel/framework": ">=6.0",
         "angel-source-labs/laravel-expression-grammar": "*",
+        "composer/semver": "*",
         "ext-pdo": "*"
     },
     "require-dev-note": {
@@ -36,7 +44,6 @@
         "mockery/mockery": "^1.4.2",
         "orchestra/testbench": "*",
         "doctrine/dbal": "^2.6|^3.0",
-        "composer/semver": "*",
         "symplify/easy-ci": "*"
     },
     "autoload": {

@@ -34,35 +34,27 @@ class GrammarTest extends BaseTestCase
         }
     }
 
-    /**
-     * @environment-setup useMySqlConnection
-     */
     public function test_MySqlConnection_has_correct_insert_and_update_Sql()
     {
+        $this->useMySqlConnection($this->app);
         $this->assertGrammar('select * from `users` where grammar = "mysql" and price > IF(state = "TX", ?, ?)');
     }
 
-    /**
-     * @environment-setup usePostgresConnection
-     */
     public function test_PostgresConnection_has_correct_insert_and_update_Sql()
     {
+        $this->usePostgresConnection($this->app);
         $this->assertGrammar('select * from "users" where grammar = "pgsql" and price > IF(state = "TX", ?, ?)');
     }
 
-    /**
-     * @environment-setup useSQLiteConnection
-     */
     public function test_useSQLiteConnection_has_correct_insert_and_update_Sql()
     {
+        $this->useSQLiteConnection($this->app);
         $this->assertGrammar('select * from "users" where grammar = "sqlite" and price > IF(state = "TX", ?, ?)');
     }
 
-    /**
-     * @environment-setup useSqlServerConnection
-     */
     public function test_useSqlServerConnection_has_correct_insert_and_update_Sql()
     {
+        $this->useSqlServerConnection($this->app);
         $this->assertGrammar('select * from [users] where grammar = "sqlserver" and price > IF(state = "TX", ?, ?)');
     }
 
