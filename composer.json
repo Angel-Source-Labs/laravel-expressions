@@ -23,6 +23,7 @@
             "PKSA-fndg-qryc-dyc9"
           ]
         },
+        "block-insecure": false,
         "preferred-install": {
             "laravel/framework": "source"
         }
