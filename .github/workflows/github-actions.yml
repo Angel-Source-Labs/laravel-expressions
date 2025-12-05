@@ -167,6 +167,8 @@ jobs:
       - name: Run Laravel /framework/tests/Database unit tests
         run: vendor/phpunit/phpunit/phpunit --testsuite laravel-database-unit
       - name: Run Laravel /framework/tests/Integration/Database integration Tests
+        # Version 11 has a SQLite bug regarding database locks.
+        if: ${{ matrix.laravel != '^11.0' }}
         run: vendor/phpunit/phpunit/phpunit --testsuite laravel-database-integration
 
 #      - name: 'App Package-Inclusion Test: Create Laravel Project'
