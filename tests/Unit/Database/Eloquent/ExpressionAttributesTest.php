@@ -77,11 +77,9 @@ class ExpressionAttributesTest extends BaseTestCase
         }
     }
 
-    /**
-     * @environment-setup useMySqlConnection
-     */
     public function test_MySqlConnection_has_correct_insert_and_update_Sql()
     {
+        $this->useMySqlConnection($this->app);
         $insert = "insert into `test_models` (`point`) values (ST_GeomFromText(?, ?, 'axis-order=long-lat'))";
         $insertWithId = "insert into `test_models` (`point`, `id`) values (ST_GeomFromText(?, ?, 'axis-order=long-lat'), ?)";
         $update = "update `test_models` set `point` = ST_GeomFromText(?, ?, 'axis-order=long-lat') where `id` = ?";
@@ -89,11 +87,9 @@ class ExpressionAttributesTest extends BaseTestCase
         $this->hasCorrectInsertAndUpdateSql($insert, $insertWithId, $update);
     }
 
-    /**
-     * @environment-setup usePostgresConnection
-     */
     public function test_PostgresConnection_has_correct_insert_and_update_Sql()
     {
+        $this->usePostgresConnection($this->app);
         $insert = 'insert into "test_models" ("point") values (ST_GeomFromText(?, ?)) returning "id"';
         $insertWithId = 'insert into "test_models" ("point", "id") values (ST_GeomFromText(?, ?), ?) returning "id"';
         $update = 'update "test_models" set "point" = ST_GeomFromText(?, ?) where "id" = ?';

@@ -11,6 +11,7 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SQLiteGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SqlServerGrammar;
 use Illuminate\Support\Facades\DB;
+use Tests\Unit\BaseTestCase;
 use Tests\Unit\DatabaseConnections;
 
 /**
@@ -21,7 +22,7 @@ use Tests\Unit\DatabaseConnections;
  * 1. the QueryGrammar classes to be resolved by the DatabaseManager
  * 2. the QueryBuilder class to be resolved by the connection from the service container
  */
-class ExpressionServiceProviderTest extends \Orchestra\Testbench\TestCase
+class ExpressionServiceProviderTest extends BaseTestCase
 {
     use DatabaseConnections;
 
@@ -35,35 +36,27 @@ class ExpressionServiceProviderTest extends \Orchestra\Testbench\TestCase
         $this->assertInstanceOf(Builder::class, DB::connection()->query());
     }
 
-    /**
-     * @environment-setup useMySqlConnection
-     */
     public function testItLoadsMySqlGrammar()
     {
+        $this->useMySqlConnection($this->app);
         $this->assertInstanceOf(MySqlGrammar::class, DB::connection()->getQueryGrammar());
     }
 
-    /**
-     * @environment-setup usePostgresConnection
-     */
     public function testItLoadsPostgresGrammar()
     {
+        $this->usePostgresConnection($this->app);
         $this->assertInstanceOf(PostgresGrammar::class, DB::connection()->getQueryGrammar());
     }
 
-    /**
-     * @environment-setup useSQLiteConnection
-     */
     public function testItLoadsSQLiteGrammar()
     {
+        $this->useSQLiteConnection($this->app);
         $this->assertInstanceOf(SQLiteGrammar::class, DB::connection()->getQueryGrammar());
     }
 
-    /**
-     * @environment-setup useSqlServerConnection
-     */
     public function testItLoadsSqlServerGrammar()
     {
+        $this->useSqlServerConnection($this->app);
         $this->assertInstanceOf(SqlServerGrammar::class, DB::connection()->getQueryGrammar());
     }
 }
