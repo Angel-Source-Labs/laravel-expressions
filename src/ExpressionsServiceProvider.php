@@ -15,7 +15,6 @@ use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\PostgresGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SQLiteGrammar;
 use AngelSourceLabs\LaravelExpressions\Database\Query\Grammars\SqlServerGrammar;
 use Illuminate\Database\Connection;
-use Composer\Semver\Semver;
 
 class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -59,16 +58,23 @@ class ExpressionsServiceProvider extends \Illuminate\Support\ServiceProvider
             Connection::resolverFor($driver, function($pdo, $database = '', $tablePrefix = '', array $config = []) use ($driver, $class) {
                 $connection = new $class['connection']($pdo, $database, $tablePrefix, $config);
 
-                // In Laravel versions 11 and below, Illuminate\Database\Grammar does not expect any arguments
-                // in the constructor. In Laravel 12, it does. We need to check the version and pass the arguments
-                // if the version is 12 or above.
-                if (Semver::satisfies(app()->version(), '<12.0')) {
-                    $connection->setQueryGrammar(new $class['queryGrammar']);
-                    $connection->setSchemaGrammar(new $class['schemaGrammar']());
-                } else {
-                    $connection->setQueryGrammar(new $class['queryGrammar']($connection));
-                    $connection->setSchemaGrammar(new $class['schemaGrammar']($connection));
-                }
+                // Detect at runtime whether the grammar constructors expect a Connection argument
+                // (introduced in Laravel 12). This avoids relying on app()->version() which may
+                // not exist on older containers and is more robust across framework versions.
+
+                $queryGrammarClass = $class['queryGrammar'];
+
+                $queryCtor = (new \ReflectionClass($queryGrammarClass))->getConstructor();
+
+                $queryNeedsConn = $queryCtor && $queryCtor->getNumberOfRequiredParameters() > 0;
+
+                $connection->setQueryGrammar($queryNeedsConn
+                    ? new $queryGrammarClass($connection)
+                    : new $queryGrammarClass);
+
+                // Let Laravel manage the default schema grammar so runtime toggles (e.g., index prefixing)
+                // are respected across framework versions and test scenarios.
+                $connection->useDefaultSchemaGrammar();
 
                 return $connection;
             });
