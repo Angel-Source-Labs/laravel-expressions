@@ -167,7 +167,7 @@ class Builder extends \Illuminate\Database\Query\Builder
                 'offset',
                 'unions',
                 'unionLimit',
-                'unionOffest',
+                'unionOffset',
                 'unionOrders',
                 'lock',
              ] as $component) {
