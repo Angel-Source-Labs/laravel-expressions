@@ -305,8 +305,9 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param array $bindings
      * @return array
      */
-    protected function mergeExpressionBindings($expression, array $bindings)
+    protected function mergeExpressionBindings($expression, $bindings)
     {
+        $bindings = is_array($bindings) ? $bindings : [$bindings];
         return ($this->isExpressionWithBindings($expression)) ? array_merge($expression->getBindings(), $bindings) : $bindings;
     }
 
@@ -323,7 +324,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param array $bindings
      * @return Builder|void
      */
-    public function selectRaw($expression, array $bindings = [])
+    public function selectRaw($expression, $bindings = [])
     {
         return parent::selectRaw($expression, $this->mergeExpressionBindings($expression, $bindings));
     }
@@ -361,7 +362,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param array $bindings
      * @return Builder
      */
-    public function havingRaw($sql, array $bindings = [], $boolean = 'and')
+    public function havingRaw($sql, $bindings = [], $boolean = 'and')
     {
         $sql = $this->unwrapRawBaseExpression($sql);
         return parent::havingRaw($sql, $this->mergeExpressionBindings($sql, $bindings), $boolean);
@@ -399,7 +400,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param array $bindings
      * @return Builder
      */
-    public function groupByRaw($sql, array $bindings = [])
+    public function groupByRaw($sql, $bindings = [])
     {
         $sql = $this->unwrapRawBaseExpression($sql);
         return parent::groupByRaw($sql, $this->mergeExpressionBindings($sql, $bindings));
