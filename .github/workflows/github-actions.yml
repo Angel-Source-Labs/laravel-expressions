@@ -28,10 +28,10 @@ jobs:
       matrix:
         php: ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
         laravel: [^7.0, ^8.0, ^9.0, ^10.0, ^11.0, ^12.0]
-        dbal: [^2.6, ^3.0]
+        dbal: [^2.6, ^3.0, ^4.0]
 #        php: ["8.4"]
 #        laravel: [^12.0]
-#        dbal: [^3.0]
+#        dbal: [^4.0]
         exclude:
           - php: 7.2
             laravel: ^8.0
@@ -109,6 +109,16 @@ jobs:
             dbal: ^2.6
           - laravel: ^12.0
             dbal: ^2.6
+          - laravel: ^6.0
+            dbal: ^4.0
+          - laravel: ^7.0
+            dbal: ^4.0
+          - laravel: ^8.0
+            dbal: ^4.0
+          - laravel: ^9.0
+            dbal: ^4.0
+          - laravel: ^10.0
+            dbal: ^4.0
 
 
     runs-on: ubuntu-latest
@@ -170,8 +180,20 @@ jobs:
 
       - name: Run Unit Tests
         run: vendor/phpunit/phpunit/phpunit --testsuite unit
-      - name: Run Laravel /framework/tests/Database unit tests
+
+
+      - name: Run Laravel /framework/tests/Database unit tests for Laravel 7/8/9/10/11
+        if: matrix.laravel != '^12.0'
         run: vendor/phpunit/phpunit/phpunit --testsuite laravel-database-unit
+
+      - name: Run Laravel /framework/tests/Database unit tests for Laravel 12
+        # Version 12 has a bug in the Eloquent Builder test suite that causes a failure,
+        # if the testGetRelationProperlySetsNestedRelationships test is run first, before testGetRelationProperlySetsNestedRelationshipsWithSimilarNames
+        if: matrix.laravel == '^12.0'
+        run: |
+          vendor/phpunit/phpunit/phpunit --testsuite laravel-database-unit --filter='^(?!.*::testGetRelationProperlySetsNestedRelationships$)'
+          vendor/phpunit/phpunit/phpunit vendor/laravel/framework/tests/Database/DatabaseEloquentBuilderTest.php --filter='^(?!.*::testGetRelationProperlySetsNestedRelationships$).*'
+
       - name: Run Laravel /framework/tests/Integration/Database integration Tests
         # Version 11 has a SQLite bug regarding database locks.
         if: ${{ matrix.laravel != '^11.0' }}
